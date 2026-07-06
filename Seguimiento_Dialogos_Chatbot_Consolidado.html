@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Base Maestra — Revisión Diálogos Chatbot</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+  :root {
+    --navy:#023859; --mid:#2a5e95; --blue:#6399ba; --gray:#808080;
+    --lgray:#d1d1d1; --white:#fff; --bg:#f5f7fa;
+    --green-bg:#c6efce; --green-fg:#276221;
+    --yellow-bg:#fff3cd; --yellow-fg:#856404;
+    --red-bg:#ffc7ce;   --red-fg:#9c0006;
+    --info-bg:#dce9f5;  --info-fg:#1f4e79;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:#1a1a2e;font-size:13px;}
+
+  /* Header */
+  .site-header{background:var(--navy);padding:20px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .site-header h1{color:var(--white);font-size:16px;font-weight:700;letter-spacing:.02em;}
+  .site-header .sub{color:var(--blue);font-size:11px;margin-top:3px;}
+  .header-right{display:flex;align-items:center;gap:10px;}
+  .header-badge{background:var(--mid);color:var(--white);border-radius:6px;padding:6px 14px;font-size:11px;font-weight:600;white-space:nowrap;}
+  .header-updated{display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;border-right:1px solid rgba(255,255,255,.2);padding-right:12px;margin-right:2px;}
+  .header-updated .hu-label{color:var(--blue);font-size:9px;text-transform:uppercase;letter-spacing:.06em;}
+  .header-updated .hu-date{color:var(--white);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;}
+
+  /* Mes tabs */
+  .mes-bar{background:var(--mid);padding:0 32px;display:flex;align-items:center;gap:0;overflow-x:auto;}
+  .mes-tab{padding:10px 20px;color:rgba(255,255,255,.65);font-size:12px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:all .2s;user-select:none;}
+  .mes-tab:hover{color:var(--white);}
+  .mes-tab.active{color:var(--white);border-bottom-color:var(--blue);}
+  .mes-tab-all{border-right:1px solid rgba(255,255,255,.2);margin-right:4px;}
+
+  /* KPIs */
+  .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:20px 32px 0;}
+  .kpi{background:var(--white);border-radius:10px;padding:16px 18px;border-top:3px solid var(--navy);box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  .kpi .num{font-size:28px;font-weight:700;color:var(--navy);line-height:1;}
+  .kpi .lbl{font-size:10px;color:var(--gray);margin-top:5px;text-transform:uppercase;letter-spacing:.05em;}
+
+  /* Controls */
+  .controls{display:flex;align-items:center;gap:10px;padding:18px 32px 12px;flex-wrap:wrap;}
+  .controls input{flex:1;min-width:180px;padding:8px 12px;border:1px solid var(--lgray);border-radius:8px;font-family:inherit;font-size:12px;outline:none;}
+  .controls input:focus{border-color:var(--blue);}
+  .controls select{padding:8px 12px;border:1px solid var(--lgray);border-radius:8px;font-family:inherit;font-size:12px;outline:none;background:var(--white);cursor:pointer;}
+  .controls select:focus{border-color:var(--blue);}
+  .count-label{margin-left:auto;font-size:11px;color:var(--gray);white-space:nowrap;}
+
+  /* Legend */
+  .legend{display:flex;gap:16px;padding:0 32px 14px;flex-wrap:wrap;}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gray);}
+  .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+  /* Table */
+  .table-wrap{padding:0 32px 40px;overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;background:var(--white);border-radius:10px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.07);font-size:12px;}
+  thead th{background:var(--navy);color:var(--white);font-weight:600;padding:10px 12px;text-align:left;white-space:nowrap;font-size:11px;letter-spacing:.03em;cursor:pointer;user-select:none;}
+  thead th:hover{background:var(--mid);}
+  thead th .si{opacity:.5;margin-left:4px;font-size:9px;}
+  tbody tr{border-bottom:1px solid #eef0f3;transition:background .15s;}
+  tbody tr:hover{background:#f0f5fa;}
+  tbody tr:last-child{border-bottom:none;}
+  td{padding:9px 12px;vertical-align:middle;}
+  td.hotel{font-weight:600;color:var(--navy);min-width:190px;}
+  td.contact{color:var(--gray);font-size:11px;}
+  td.date{text-align:center;color:var(--mid);font-variant-numeric:tabular-nums;white-space:nowrap;}
+  td.desc{max-width:260px;line-height:1.4;}
+  td.center{text-align:center;}
+
+  /* Month chip in table */
+  .mes-chip{display:inline-block;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;background:var(--navy);color:var(--white);white-space:nowrap;}
+
+  /* Badges */
+  .badge{display:inline-block;border-radius:5px;padding:3px 9px;font-size:10px;font-weight:600;white-space:nowrap;}
+  .badge.actualizado  {background:var(--green-bg);color:var(--green-fg);}
+  .badge.pendiente    {background:var(--yellow-bg);color:var(--yellow-fg);}
+  .badge.sin-respuesta{background:var(--red-bg);color:var(--red-fg);}
+  .badge.sin-mod      {background:var(--info-bg);color:var(--info-fg);}
+  .mod-si  {color:var(--green-fg);font-weight:700;}
+  .mod-no  {color:var(--gray);}
+  .mod-pend{color:var(--yellow-fg);}
+
+  /* Detail row */
+  .detail-row{display:none;background:#fafcff!important;}
+  .detail-row td{padding:0;border-top:1px dashed var(--lgray);}
+  .detail-inner{padding:14px 18px;}
+  .detail-inner h4{font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+  .mod-table{width:100%;border-collapse:collapse;font-size:11px;}
+  .mod-table th{background:#eef3f9;color:var(--navy);font-weight:600;padding:5px 10px;text-align:left;border:1px solid #dde3ea;}
+  .mod-table td{padding:5px 10px;border:1px solid #eef0f3;}
+  .mod-table tr:nth-child(even) td{background:#f7f9fc;}
+  .before{color:var(--gray);text-decoration:line-through;}
+  .after{color:var(--green-fg);font-weight:500;}
+  .expand-btn{background:none;border:none;cursor:pointer;color:var(--blue);font-size:16px;line-height:1;padding:2px 6px;border-radius:4px;transition:background .15s;}
+  .expand-btn:hover{background:#eef3f9;}
+
+  /* Empty state */
+  .empty-state{text-align:center;padding:48px 32px;color:var(--gray);}
+  .empty-state .icon{font-size:32px;margin-bottom:12px;}
+
+  /* ── Progress bar ── */
+  .progress-wrap{padding:16px 32px 0;}
+  .progress-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;}
+  .progress-label{font-size:12px;font-weight:600;color:var(--navy);}
+  .progress-pct{font-size:22px;font-weight:700;color:var(--navy);}
+  .progress-sub{font-size:11px;color:var(--gray);margin-left:6px;}
+  .progress-track{height:14px;background:#eef0f3;border-radius:99px;overflow:hidden;position:relative;}
+  .progress-fill{height:100%;border-radius:99px;transition:width .5s ease;background:linear-gradient(90deg,var(--mid),var(--blue));}
+  .progress-fill.chatbot{background:linear-gradient(90deg,#b45309,#f59e0b);}
+  .progress-block + .progress-block{margin-top:14px;}
+  .progress-segments{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .progress-seg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray);}
+  .progress-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .progress-by-ciclo{margin-top:14px;display:flex;flex-direction:column;gap:6px;}
+  .ciclo-bar-row{display:grid;grid-template-columns:64px 1fr 42px;align-items:center;gap:10px;}
+  .ciclo-bar-name{font-size:11px;font-weight:700;color:var(--navy);text-align:right;}
+  .ciclo-bar-track{height:8px;background:#eef0f3;border-radius:99px;overflow:hidden;}
+  .ciclo-bar-fill{height:100%;border-radius:99px;transition:width .5s ease;}
+  .ciclo-bar-pct{font-size:11px;color:var(--gray);text-align:right;}
+
+  @media(max-width:900px){.kpi-row{grid-template-columns:repeat(3,1fr);}}
+  @media(max-width:600px){.kpi-row{grid-template-columns:1fr 1fr;}.controls{flex-direction:column;}}
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <div>
+    <h1>Base Maestra — Revisión Mensual de Diálogos del Chatbot</h1>
+    <div class="sub">Agencia Digital GHL &nbsp;|&nbsp; Consolidado acumulativo por ciclo</div>
+  </div>
+  <div class="header-right">
+    <div class="header-updated" id="headerUpdated">
+      <span class="hu-label">Última actualización</span>
+      <span class="hu-date" id="headerUpdatedDate">—</span>
+    </div>
+    <div class="header-badge" id="headerBadge">—</div>
+  </div>
+</div>
+
+<!-- Mes tabs -->
+<div class="mes-bar" id="mesBar"></div>
+
+<!-- KPIs -->
+<div class="kpi-row" id="kpiRow"></div>
+
+<!-- Progress bar -->
+<div class="progress-wrap" id="progressWrap"></div>
+
+<!-- Controls -->
+<div class="controls">
+  <input type="text" id="searchInput" placeholder="Buscar hotel, contacto o descripción…" oninput="applyFilters()">
+  <select id="filterMod" onchange="applyFilters()">
+    <option value="">Todas — Modificaciones</option>
+    <option value="Sí">Con modificaciones</option>
+    <option value="No">Sin modificaciones</option>
+    <option value="—">Sin respuesta</option>
+  </select>
+  <select id="filterStatus" onchange="applyFilters()">
+    <option value="">Todos — Estado</option>
+    <option value="Actualizado">Actualizado</option>
+    <option value="Pendiente actualización">Pendiente actualización</option>
+    <option value="Sin respuesta">Sin respuesta</option>
+    <option value="Sin modificaciones">Sin modificaciones</option>
+  </select>
+  <span class="count-label" id="countLabel"></span>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#c6efce;border:1px solid #276221"></div>Actualizado</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#fff3cd;border:1px solid #856404"></div>Pendiente actualización</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ffc7ce;border:1px solid #9c0006"></div>Sin respuesta</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#dce9f5;border:1px solid #1f4e79"></div>Sin modificaciones</div>
+</div>
+
+<div class="table-wrap">
+<table id="mainTable">
+  <thead>
+    <tr>
+      <th></th>
+      <th onclick="sortTable(1)">Hotel <span class="si">⇅</span></th>
+      <th onclick="sortTable(2)">Contacto <span class="si">⇅</span></th>
+      <th onclick="sortTable(3)">Ciclo <span class="si">⇅</span></th>
+      <th onclick="sortTable(4)">Fecha envío <span class="si">⇅</span></th>
+      <th onclick="sortTable(5)">Fecha respuesta <span class="si">⇅</span></th>
+      <th onclick="sortTable(6)">¿Modificaciones? <span class="si">⇅</span></th>
+      <th>Descripción de modificaciones</th>
+      <th onclick="sortTable(8)">Fecha actualiz. chatbot <span class="si">⇅</span></th>
+      <th>Comentarios</th>
+      <th onclick="sortTable(10)">Estado <span class="si">⇅</span></th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// DATOS — agrega nuevos ciclos aquí abajo
+// Cada objeto = 1 hotel en 1 ciclo
+// ─────────────────────────────────────────────
+const allData = [
+  // ══════════════ JUNIO 2026 ══════════════
+  {ciclo:"Jun-26",hotel:"Arsenal",contacto:"Luis Saez",correo:"luis.saez@ghlhoteles.com",envio:"02/06/2026",respuesta:"22/06/2026",mod:"Sí",desc:"39 diálogos modificados: contactos/teléfonos reservas, day pass, desayuno, room service, wifi, tarifa niños, lavandería, factura, transfer, taxi, coworking, tipos de habitación, fumadores, baño, camas, vistas, mascotas, alcohol, bar, spa, gimnasio, piscina",fechaChatbot:"24/06/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",mods:[
+      {dialogo:"10-04",nombre:"Reservation modification",campo:"Teléfono de contacto",antes:"Tel +57 (605) 660 5831",despues:"Cel +57 3160107651"},
+      {dialogo:"10-06",nombre:"Reservation cancellation",campo:"Teléfono de contacto",antes:"Cel +57 (605) 660 5831",despues:"Cel +57 3160107651"},
+      {dialogo:"10-17",nombre:"Travel agent",campo:"Teléfono de contacto",antes:"+57 (605) 660 5831",despues:"+57 315 3172272"},
+      {dialogo:"10-33",nombre:"Early booking",campo:"% descuento reserva anticipada (60 días)",antes:"15%",despues:"12%"},
+      {dialogo:"10-41",nombre:"Day use / day pass",campo:"Disponibilidad de day pass",antes:"No disponibles",despues:"Sí disponibles; contacto reservas.arsenal@ghlhoteles.com, Cel +57 3160107651 / +57 350 7293732"},
+      {dialogo:"12-01",nombre:"Breakfast time",campo:"Desayuno en habitación / menú",antes:"Desayuno en habitación sin costo; menú del desayuno",despues:"Desayuno en habitación con costo adicional; menú de Room Service"},
+      {dialogo:"13-06",nombre:"Room service",campo:"Horario",antes:"06:00–23:00",despues:"06:30–22:00"},
+      {dialogo:"13-11",nombre:"Wifi & Internet",campo:"Internet alta velocidad / cobertura piscina",antes:"Sin alta velocidad; piscina y playa sin Wifi",despues:"Con alta velocidad; áreas de piscina con cobertura Wifi"},
+      {dialogo:"13-21",nombre:"Kids",campo:"Tarifa niño 3-11 años",antes:"80.000 COP/noche",despues:"100.000 COP/noche"},
+      {dialogo:"13-25",nombre:"Babies",campo:"Solicitud de cuna",antes:"Cuna (gratis)",despues:"Cuna (gratis); solicitar a reservas.arsenal@ghlhoteles.com"},
+      {dialogo:"13-42",nombre:"Lost & found",campo:"Correo y teléfono",antes:"recepcion.arsenal@ghlhoteles.com; +57 (605) 660 5831",despues:"habitaciones.arsenal@ghlhoteles.com; +57 350 7293732"},
+      {dialogo:"13-43",nombre:"Laundry",campo:"Costo del servicio",antes:"Sin mención de costo",despues:"Servicio de lavandería con costo adicional"},
+      {dialogo:"13-47",nombre:"Invoice",campo:"Correo para factura",antes:"reservas.arsenal@ghlhoteles.com",despues:"luis.saez@ghlhoteles.com"},
+      {dialogo:"13-51",nombre:"Private transfer",campo:"Tarifas y contacto",antes:"Diurno 90.000 / Nocturno 108.000; Tel +57 605 6605831",despues:"Diurno 120.000 / Nocturno 144.000; solo Cel +57 350 7293732; correo reservas.arsenal@ghlhoteles.com"},
+      {dialogo:"13-53",nombre:"Taxi",campo:"Tarifas de taxi aeropuerto",antes:"Aeropuerto 15.000 COP, 17 min",despues:"Aeropuerto→hotel desde 20.000 COP (17 min); hotel→aeropuerto desde 25.000 COP (20 min)"},
+      {dialogo:"13-71",nombre:"Coworking space",campo:"Descripción",antes:"Solo 'Información detallada: aquí'",despues:"Espacio de coworking sujeto a disponibilidad; sala de juntas para espacios más grandes"},
+      {dialogo:"14-01",nombre:"Accommodation",campo:"Tipos de habitación",antes:"Estándar 32, Superior 25, Luxury Street View 10, Luxury Bay View 4",despues:"Estándar Queen 8, Estándar King 49, Superior King 10, Superior Superior 4"},
+      {dialogo:"14-02",nombre:"Connecting & close accommodation",campo:"Habitaciones conectadas",antes:"Disponibles para Standard y Superior",despues:"No tenemos habitaciones conectadas"},
+      {dialogo:"14-03",nombre:"Family accommodation",campo:"Redacción habitaciones adicionales",antes:"Contiguas o conectadas",despues:"Contiguas o cercanas (según disponibilidad)"},
+      {dialogo:"14-04",nombre:"Smoking",campo:"Tarifa limpieza por humo",antes:"0 COP",despues:"390.000 COP"},
+      {dialogo:"15-06",nombre:"Bathroom equipment",campo:"Amenidades de baño",antes:"Albornoz; a petición cepillo dientes/pelo; no disponibles pantuflas/pasta/gorro/toallas de playa",despues:"Bata o salida de baño; a petición gratis: pantuflas, vanity kit, kit dental, gorro de ducha, toallas de playa"},
+      {dialogo:"15-23",nombre:"Extra bed",campo:"Cama extra",antes:"Gratuita",despues:"Con costo adicional y sujeta a disponibilidad"},
+      {dialogo:"15-26",nombre:"Twin beds",campo:"Habitaciones con camas individuales",antes:"Habitación Superior",despues:"Estándar King, Superior King y Superior Superior"},
+      {dialogo:"15-48",nombre:"Electrical & mobile phone facilities",campo:"Enchufes digitales / USB",antes:"USB Sí, USB-C Sí; adaptadores y cargador gratis",despues:"Sin enchufes digitales (USB No); radio relojes con puerto USB; adaptadores en locales cercanos; cargador sujeto a disponibilidad"},
+      {dialogo:"15-61",nombre:"Balcony & windows",campo:"Tipos de habitación / balcón",antes:"Estándar, Superior, Luxury Street View, Luxury Bay View",despues:"Estándar Queen/King, Superior King/Superior; balcón sujeto a disponibilidad"},
+      {dialogo:"15-62",nombre:"View",campo:"Vistas por tipo de habitación",antes:"Todas: bahía y mar (parcial)",despues:"Bahía parcial (Superior Superior); Calle Larga (Superior King); Interna (Estándar King)"},
+      {dialogo:"15-81",nombre:"TV",campo:"Guía de canales",antes:"Guía de canales en la habitación",despues:"Guía de canales en actualización"},
+      {dialogo:"15-99",nombre:"Specific room request",campo:"Teléfono de contacto",antes:"Tel +57 (605) 660 5831",despues:"Cel +57 3160107651"},
+      {dialogo:"16-03",nombre:"Service request & complaint",campo:"Teléfono de contacto",antes:"Tel +57 (605) 660 5831",despues:"Cel +57 3160107651"},
+      {dialogo:"16-06",nombre:"Jobs & internships",campo:"Correo RR.HH.",antes:"karen.vergara@ghlhoteles.com; Tel +57 605 6605831",despues:"sandy.negrete@ghlhoteles.com"},
+      {dialogo:"16-10",nombre:"Pets",campo:"Política de mascotas",antes:"No se admiten mascotas",despues:"Admite perros y gatos (incl. servicio/asistencia); $100.000 limpieza; carné de vacunas al día"},
+      {dialogo:"16-44",nombre:"Alcohol policy",campo:"Consumo de alcohol",antes:"Prohibido en habitaciones y zonas comunes salvo restaurante",despues:"Permitido en habitaciones; en zonas comunes con descorche $80.000 COP; excepto restaurante"},
+      {dialogo:"17-01",nombre:"Bar",campo:"Horario de apertura",antes:"08:00–21:00",despues:"09:00–21:00 (sin happy hour)"},
+      {dialogo:"17-15",nombre:"Spa hours",campo:"Horario",antes:"09:00–20:00",despues:"11:00–18:00"},
+      {dialogo:"17-31",nombre:"Fitness gym",campo:"Equipamiento",antes:"Máquina de remo; duchas, taquillas, toallas",despues:"Máquina elíptica; toallas y dispensador de agua filtrada (sin duchas/taquillas)"},
+      {dialogo:"17-43",nombre:"Floor arrangement & elevator",campo:"Ubicación por piso/habitación",antes:"Standard/Superior cualquier piso; Luxury pisos superiores",despues:"Estándar Queen piso 4; Estándar King pisos 1-3; Superior King/Superior pisos 2-3"},
+      {dialogo:"17-44",nombre:"Disabled guest",campo:"Redacción / teléfono",antes:"Incluía línea de detalle de infraestructura; Tel +57 (605) 660 5831",despues:"Sin esa línea; Cel +57 3160107651"},
+      {dialogo:"17-61",nombre:"Swimming pool",campo:"Tarifas, horario y reserva",antes:"Público 30.000 COP/día, límite 5 h, cap. 35, gorro obligatorio",despues:"Adultos 240.000 / Niños 120.000 COP/día (50% consumibles), 09:00–17:00, reserva previa; ducha Sí"},
+      {dialogo:"17-62",nombre:"Swimming pool hours",campo:"Horario",antes:"08:00–21:00",despues:"09:00–21:00"}
+    ]},
+  {ciclo:"Jun-26",hotel:"Biohotel",contacto:"Maria Del Pilar Narvaez",correo:"pilar.narvaez@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"Bioxury",contacto:"Andrea Rojas",correo:"catalina.rojas@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"⚠ El correo catalina.rojas@ghlhoteles.com ahora corresponde a Sonesta Bogotá (Catalina Rojas) — verificar/definir contacto propio de Bioxury",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"Geotel Antofagasta",contacto:"Nelson Uriel Perez Ortiz",correo:"nelson.perez@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"Geotel Calama",contacto:"Katherine Mora",correo:"katherine.mora@ghlhoteles.com",envio:"02/06/2026",respuesta:"04/06/2026",mod:"Sí",desc:"8 diálogos modificados: contacto reservas/eventos, modificación/cancelación reserva, pagos, check-out, desayuno, parking",fechaChatbot:"23/06/2026",actualizadoPor:"Santiago Cristancho",comentarios:"",estado:"Actualizado",
+    mods:[
+      {dialogo:"16-02",nombre:"Contact staff — Reserva",campo:"WhatsApp/celular",antes:"No tenía WhatsApp",despues:"+56 931909316 / +56 996795687"},
+      {dialogo:"16-02",nombre:"Contact staff — Eventos",campo:"Email / WhatsApp",antes:"ventascalama@geotel.cl, sin WhatsApp",despues:"pablo.arancibia@ghlhoteles.com / WhatsApp +56 942830425"},
+      {dialogo:"10-04",nombre:"Reservation modification",campo:"Correo / WhatsApp",antes:"reservascalama@geotel.cl, sin WhatsApp",despues:"reservas.geotelcalama@ghlhoteles.com / WhatsApp +56 931909316, +56 996795687"},
+      {dialogo:"10-06",nombre:"Reservation cancellation",campo:"Correo / WhatsApp",antes:"reservascalama@geotel.cl, sin WhatsApp",despues:"reservas.geotelcalama@ghlhoteles.com / WhatsApp +56 931909316, +56 996795687"},
+      {dialogo:"10-71",nombre:"Payment method",campo:"Aceptación de efectivo",antes:"Aceptamos efectivo en recepción",despues:"No aceptamos efectivo (ni local ni dólares), requiere tarjeta de crédito"},
+      {dialogo:"11-11",nombre:"Check-out time",campo:"Check-out tardío",antes:"Tardío hasta 16:00 sujeto a disponibilidad",despues:"Tardío hasta 13:00 cortesía; después con costo adicional y sujeto a disponibilidad"},
+      {dialogo:"12-01",nombre:"Breakfast time",campo:"Horario desayuno",antes:"05:30-10:00 (horario raro fines de semana 00:00-00:00)",despues:"06:00-10:00 todos los días; se aclara que debe disfrutarse en el restaurante"},
+      {dialogo:"12-02",nombre:"Breakfast rates",campo:"Precio adulto",antes:"8000 USD (error evidente de digitación)",despues:"14 USD"},
+      {dialogo:"13-01",nombre:"Parking",campo:"Altura máxima / bicicletas / mascotas",antes:"Altura 600cm; sin parqueo bicis; sin mención de mascotas",despues:"Altura 2.6 mts; parqueo bicis al aire libre; no se aceptan mascotas"},
+    ]},
+  {ciclo:"Jun-26",hotel:"GHL Collection 93",contacto:"James Mendoza",correo:"james.mendoza@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"Armeria Real",contacto:"Saray Estrada",correo:"Saray.estrada@ghlhoteles.com",envio:"02/06/2026",respuesta:"04/06/2026",mod:"Sí",desc:"Actualización diálogo 10-09",fechaChatbot:"23/06/2026",actualizadoPor:"Santiago Cristancho",comentarios:"",estado:"Actualizado",mods:[{dialogo:"10-09",nombre:"—",campo:"Disponibilidad",antes:"Versión anterior",despues:"Disponible de manera gratuita"}]},
+  {ciclo:"Jun-26",hotel:"GHL Collection Hamilton",contacto:"Wilson Bohorquez",correo:"andres.bohorquez@ghlhoteles.com",envio:"02/06/2026",respuesta:"03/06/2026",mod:"Sí",desc:"6 diálogos modificados: early check-in, check-out tardío, desayuno, room service, transfer privado, quejas",fechaChatbot:"23/06/2026",actualizadoPor:"Santiago Cristancho",comentarios:"",estado:"Actualizado",
+    mods:[
+      {dialogo:"11-01",nombre:"Check-in time",campo:"Precio early check-in",antes:"100000 COP/habitación",despues:"$150.000 COP/habitación"},
+      {dialogo:"11-11",nombre:"Check-out time",campo:"Precio check-out tardío",antes:"80000 COP/habitación",despues:"$150.000 COP/habitación"},
+      {dialogo:"12-02",nombre:"Breakfast rates",campo:"Precio adulto",antes:"27000 COP",despues:"30000 COP"},
+      {dialogo:"13-06",nombre:"Room service",campo:"Horario servicio",antes:"08:00 a 22:00",despues:"07:00 a 14:00"},
+      {dialogo:"13-51",nombre:"Private transfer",campo:"Formato correo (hipervínculo)",antes:"reservas.hamilton@ghlhoteles (texto plano, dominio incompleto)",despues:"reservas.hamilton@ghlhoteles.com (hipervínculo corregido)"},
+      {dialogo:"16-03",nombre:"Service request & complaint",campo:"Correo de quejas",antes:"reservas.hamilton@ghlhoteles.com",despues:"andres.bohorquez@ghlhoteles.com"},
+    ]},
+  {ciclo:"Jun-26",hotel:"GHL Grand Villavicencio",contacto:"Ingrid Mendez",correo:"jimena.mendez@ghlhoteles.com",envio:"02/06/2026",respuesta:"03/06/2026",mod:"Sí",desc:"22 diálogos modificados: contacto eventos/agentes, cancelación, desayuno, parking, actividades, niños, bebés, objetos perdidos, transfer, habitaciones, vistas, empleos, alcohol, accesibilidad, piscina, eventos, lavandería, wifi",fechaChatbot:"26/06/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",
+    mods:[
+      {dialogo:"16-02",nombre:"Eventos",campo:"Teléfono gratuito",antes:"+57 608 6680666",despues:"+57 3188066966 / 300 3038429"},
+      {dialogo:"10-17",nombre:"Travel agent",campo:"Teléfono",antes:"+57 (608) 6680666",despues:"3003029319"},
+      {dialogo:"10-05",nombre:"Reservation cancellation policy",campo:"Plazo reembolso reservas flexibles",antes:"Hasta 72 horas antes del check-in",despues:"Hasta 48 horas antes del check-in"},
+      {dialogo:"12-02",nombre:"Breakfast rates",campo:"Estructura de precio",antes:"Adulto 45000 / Niños 25000 COP",despues:"Tarifa única adulto y niños: 38.000 COP (Tipo Buffet)"},
+      {dialogo:"13-01",nombre:"Parking",campo:"Límite por habitación",antes:"Sin especificar límite",despues:"Incluye 1 vehículo por habitación"},
+      {dialogo:"13-13",nombre:"Activities",campo:"Programación semanal",antes:"Sin actividades regulares",despues:"Jueves música en vivo + cocteles 2x1; sábados música llanera 8-10pm"},
+      {dialogo:"13-21",nombre:"Kids",campo:"Edad gratis / tarifa",antes:"Gratis hasta 3 años; 4-11 años 55000 COP",despues:"Gratis hasta 5 años; 6-10 años 110.000 + IVA COP; correo cambia a reservas.grandhotel@"},
+      {dialogo:"13-25",nombre:"Babies",campo:"Equipamiento",antes:"Cuna gratis",despues:"Corral gratis (reemplaza cuna)"},
+      {dialogo:"13-42",nombre:"Lost & found",campo:"Correo de contacto",antes:"reservas.grandhotel@ghlhoteles.com",despues:"habitaciones.grandhotel@ghlhoteles.com"},
+      {dialogo:"13-51",nombre:"Private transfer",campo:"Disponibilidad del servicio",antes:"Servicio disponible $35.000 COP (1-4 personas)",despues:"Ya no prestamos este servicio"},
+      {dialogo:"14-01",nombre:"Accommodation",campo:"Inventario de habitaciones",antes:"136 habitaciones, incluye nota de fumadores por tipo",despues:"137 habitaciones (king doble 46, sencilla 6), se elimina nota de fumadores"},
+      {dialogo:"15-23",nombre:"Extra bed",campo:"Disponibilidad cama extra",antes:"80000 COP/noche",despues:"No aplica (servicio descontinuado)"},
+      {dialogo:"15-62",nombre:"View",campo:"Tipo de vista",antes:"Vista de la calle (parcial)",despues:"Vista a la montaña (parcial) — reemplaza vista de la calle"},
+      {dialogo:"16-06",nombre:"Jobs & internships",campo:"Email RRHH",antes:"talentohumano.grandhotel@ghlhoteles.com",despues:"Claudia.bohorquez@ghlhoteles.com"},
+      {dialogo:"16-44",nombre:"Alcohol policy",campo:"Política de consumo",antes:"Prohibido excepto en restaurante",despues:"No se autoriza ingreso de bebidas alcohólicas para consumo en zonas comunes"},
+      {dialogo:"17-44",nombre:"Disabled guest",campo:"Accesibilidad",antes:"Propiedad preparada para movilidad reducida",despues:"Propiedad NO preparada (mantiene 1 habitación accesible)"},
+      {dialogo:"17-61",nombre:"Swimming pool",campo:"Horario y dimensiones",antes:"10h-20h mar-sáb, 8h-20h dom/fest; ancho 6m, largo 12m",despues:"10h-21h mar-dom/fest; ancho 5m, largo 13.5m"},
+      {dialogo:"20-01 / 20-21",nombre:"Business meetings / Celebration",campo:"Teléfono eventos",antes:"+57 608 6680666",despues:"+57 3188066966"},
+      {dialogo:"13-43",nombre:"Laundry",campo:"Hora de devolución",antes:"Antes de las 10:00 (mismo día)",despues:"Antes de las 07:00 pm (mismo día)"},
+      {dialogo:"13-11",nombre:"Wifi & Internet",campo:"Texto simplificado",antes:"Detalle extenso de cobertura por área",despues:"Texto reducido: wifi gratuito, acceso en todas las áreas"},
+    ]},
+  {ciclo:"Jun-26",hotel:"GHL Hotel Capital",contacto:"Maira Piza",correo:"maira.piza@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"GHL Lago Titicaca",contacto:"Milagros Velazco Reyes",correo:"milagros.velazco@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"Respondió que revisaría (correo 02/06) pero a la fecha no envió la revisión",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"GHL Montería",contacto:"Jose Medina",correo:"mauricio.medina@ghlhoteles.com",envio:"02/06/2026",respuesta:"04/06/2026",mod:"Sí",desc:"Errores en PDF + ajustes gerencia (2 correos: 4 y 5 jun)",fechaChatbot:"02/07/2026",actualizadoPor:"",comentarios:"2 correos: 4-jun y 5-jun",estado:"Actualizado",mods:[{dialogo:"—",nombre:"Varios",campo:"Ver adjunto",antes:"—",despues:"Ver archivos adjuntos (2 correos)"}]},
+  {ciclo:"Jun-26",hotel:"GHL Portón Medellín",contacto:"Jose Fernando Villareal",correo:"jose.villareal@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"GHL Relax Club Hotel el Puente",contacto:"Maria Gomez",correo:"angelica.gomez@ghlhoteles.com",envio:"02/06/2026",respuesta:"05/06/2026",mod:"Sí",desc:"18 diálogos modificados: restaurante, contacto reservas/mercadeo, remodelación, desayuno, plancha, balcón, empleos, mascotas, spa, gimnasio, ascensor, accesibilidad, eventos",fechaChatbot:"26/06/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",
+    mods:[
+      {dialogo:"024",nombre:"Restaurante",campo:"Horario atención",antes:"6:00 a.m. a 10:00 p.m.",despues:"6:30 a.m. a 9:00 p.m."},
+      {dialogo:"16-06",nombre:"Contact Staff — Reserva",campo:"Teléfono",antes:"+57 601 8366824",despues:"+57 321 469 3086"},
+      {dialogo:"16-06",nombre:"Contact Staff — Mercadeo",campo:"Teléfono",antes:"+57 601 8366824",despues:"+57 321 469 0604"},
+      {dialogo:"10-04",nombre:"Reservation modification",campo:"Teléfono",antes:"+57 1 836 6824",despues:"+57 321 469 3086"},
+      {dialogo:"10-06",nombre:"Reservation cancellation",campo:"Teléfono",antes:"+57 1 836 6824",despues:"+57 321 469 3086"},
+      {dialogo:"10-13 / 10-42",nombre:"Opening, closing & renovation",campo:"Estado de remodelación",antes:"Sin renovación prevista",despues:"Remodelación en curso — piscina principal, infantil y jacuzzi fuera de servicio hasta ~15 jun. Disponible: Piscina Lagos, sauna, turco, SPA (con cargo), ping-pong, billar, voleibol"},
+      {dialogo:"12-01",nombre:"Breakfast time",campo:"Horario desayuno",antes:"07:00 a 10:00",despues:"06:30 a 10:00"},
+      {dialogo:"13-06",nombre:"Room service",campo:"Texto del diálogo",antes:"Incluye link a menú",despues:"Se elimina referencia al menú"},
+      {dialogo:"15-35",nombre:"Iron and ironing board",campo:"Disponibilidad plancha",antes:"Disponible en la habitación",despues:"Disponible en la habitación a solicitud"},
+      {dialogo:"15-61",nombre:"Balcony & windows",campo:"Balcón",antes:"Todas las habitaciones tienen balcón",despues:"Algunas habitaciones tienen balcón"},
+      {dialogo:"16-06",nombre:"Jobs & internships",campo:"Teléfono RRHH",antes:"+57 601 836682",despues:"+57 321 469 0604"},
+      {dialogo:"16-10",nombre:"Pets",campo:"Política completa de mascotas",antes:"Sin tasa, cartilla no obligatoria",despues:"Cartilla obligatoria, tasa $47.600/noche, cama y boles para mascotas ahora disponibles"},
+      {dialogo:"17-10",nombre:"Spa",campo:"Horario spa",antes:"9:00-17:00 (fines de semana 9:00-15:00)",despues:"Todos los días 9:00-12:00 y 15:00-17:00 (previa reserva)"},
+      {dialogo:"17-31",nombre:"Fitness gym",campo:"Gimnasio recomendado",antes:"Barbaros Gym, 3.2 km",despues:"Smart Fit Unicentro, 2.8 km"},
+      {dialogo:"17-43",nombre:"Floor arrangement & elevator",campo:"Distribución Superior Twin",antes:"Solo planta baja",despues:"Planta baja y planta alta"},
+      {dialogo:"17-44",nombre:"Disabled guest",campo:"Habitaciones accesibles",antes:"2 habitaciones, redacción distinta",despues:"2 habitaciones para movilidad reducida (texto simplificado)"},
+      {dialogo:"20-01",nombre:"Business meetings",campo:"Teléfono eventos",antes:"+57 601 8366824",despues:"+57 321 469 0604"},
+      {dialogo:"20-21",nombre:"Celebration",campo:"Teléfono eventos",antes:"+57 601 8366824",despues:"+57 321 469 0604"},
+    ]},
+  {ciclo:"Jun-26",hotel:"GHL Relax Hotel Corales de Indias",contacto:"Andres Narvaez",correo:"andres.narvaez@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"GHL Relax Hotel Costa Azul",contacto:"Marlis Marriaga",correo:"marlys.marriaga@ghlhoteles.com",envio:"02/06/2026",respuesta:"03/06/2026",mod:"Sí",desc:"10 diálogos modificados: ubicación, contacto, check-in/out, room service, entregas, taxi, fumadores, vistas",fechaChatbot:"26/06/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",
+    mods:[
+      {dialogo:"19-01",nombre:"Location",campo:"Dirección",antes:"Km. 19 vía Santa Marta - Ciénaga",despues:"Km. 19 vía Ciénaga (se elimina 'Santa Marta -')"},
+      {dialogo:"16-02",nombre:"Contact staff",campo:"Recepción / Reservas",antes:"Recepción y Reservas mismo tel. +57 605 4237074, sin WhatsApp",despues:"Recepción +57 605 4237074 / Reservas +57 605 4237075, ambos con WhatsApp +57 3174588115"},
+      {dialogo:"10-02",nombre:"Stars & category",campo:"Link de más información",antes:"Link apuntaba a GHL Relax Sunrise (error)",despues:"Corregido a link de GHL Relax Hotel Costa Azul"},
+      {dialogo:"1-01",nombre:"Check-in time",campo:"Early check-in",antes:"Desde 06:00, costo 100000 COP/habitación",despues:"Desde 06:00 am, sin costo adicional, sujeto a disponibilidad"},
+      {dialogo:"11-11",nombre:"Check-out time",campo:"Precio check-out tardío",antes:"100000 COP por habitación",despues:"200.000 COP por habitación + IVA 19%"},
+      {dialogo:"13-06",nombre:"Room service",campo:"Horario servicio",antes:"Disponible 24/7",despues:"7:00 am a 9:30 pm"},
+      {dialogo:"13-46",nombre:"Delivery",campo:"Dirección de entregas",antes:"Km. 19 vía Santa Marta - Ciénaga",despues:"Km. 19 vía Ciénaga (se elimina 'Santa Marta -')"},
+      {dialogo:"13-53",nombre:"Taxi",campo:"Tarifas aproximadas",antes:"Aeropuerto 28000 COP / Centro histórico 38000 COP",despues:"Aeropuerto 30.000 COP / Centro histórico 40.000 COP"},
+      {dialogo:"14-04",nombre:"Smoking",campo:"Zona de fumadores / tarifa limpieza",antes:"Solo exterior; tarifa 0 COP",despues:"Zona designada para fumadores; tarifa 350.000 COP"},
+      {dialogo:"15-62",nombre:"View",campo:"Vista al mar Junior Suite/Estándar",antes:"Vista al mar garantizada",despues:"Con balcón; vista al mar sujeta a disponibilidad"},
+    ]},
+  {ciclo:"Jun-26",hotel:"GHL Relax Hotel Sunrise",contacto:"Juan Martinez",correo:"juan.martinez@ghlhoteles.com",envio:"02/06/2026",respuesta:"11/06/2026",mod:"Sí",desc:"15 diálogos modificados: contacto eventos, ofertas especiales, desayuno, room service, bebés, marketing, parque acuático, restaurantes, brunch, reuniones, celebraciones",fechaChatbot:"26/06/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",
+    mods:[
+      {dialogo:"16-02",nombre:"Contact staff — Eventos",campo:"Email",antes:"Luz.pedroza@ghlhoteles.com",despues:"calidad.sunrise@ghlhoteles.com"},
+      {dialogo:"16-02",nombre:"Contact staff — Eventos",campo:"Teléfono",antes:"+576085123988",despues:"+57 315 5452921"},
+      {dialogo:"10-19",nombre:"Special offers",campo:"WhatsApp planes para parejas",antes:"+57 324 1001996",despues:"+57 317 5387071"},
+      {dialogo:"12-01",nombre:"Breakfast time",campo:"Horario desayuno buffet",antes:"6h a 10h",despues:"7h a 10h"},
+      {dialogo:"12-02",nombre:"Breakfast rates",campo:"Precio adulto / niños",antes:"Adulto 37000 COP / Niños (<11) 28000 COP",despues:"Adulto 40000 COP / Niños (3-11) 30000 COP"},
+      {dialogo:"12-04",nombre:"Breakfast reservation",campo:"Tarifas reserva",antes:"Adultos $37.000 / Niños $28.000",despues:"Adultos $40.000 / Niños $30.000"},
+      {dialogo:"13-06",nombre:"Room service",campo:"Horario servicio",antes:"Disponible 24/7",despues:"7:00 am a 9:00 pm"},
+      {dialogo:"13-25",nombre:"Babies",campo:"Equipamiento",antes:"Cuna, silla alta, cochecito",despues:"Cuna, silla alta en el restaurante (se elimina cochecito)"},
+      {dialogo:"16-15",nombre:"Social & photoshoot",campo:"Correo marketing",antes:"Jaime.meza@ghlhoteles.com",despues:"calidad.sunrise@ghlhoteles.com"},
+      {dialogo:"17-82",nombre:"Water park reservation",campo:"Disponibilidad",antes:"Reservas vía reservas2.sunrise@ghlhoteles.com",despues:"No contamos con parque acuático"},
+      {dialogo:"18-01",nombre:"Restaurant",campo:"Detalles 3 restaurantes (Henriette, El Muelle, Paradise)",antes:"Solo huéspedes, sin niños en Henriette, sin desayuno en Paradise, capacidad 90",despues:"Abierto a externos y huéspedes, acepta niños, Paradise agrega desayuno 7-10am, capacidad 120"},
+      {dialogo:"18-11",nombre:"Brunch",campo:"Tarifas brunch domingo",antes:"Adulto $52.000/14 USD — Niños $30.000/8 USD",despues:"Adulto $62.000/15 USD — Niños $38.000/9 USD"},
+      {dialogo:"20-01",nombre:"Business meetings",campo:"Contacto eventos",antes:"Luz.pedroza@ghlhoteles.com / +57 608 512 3988",despues:"calidad.sunrise@ghlhoteles.com / +57 315 5452921"},
+      {dialogo:"20-02",nombre:"Business meeting reservation",campo:"Correos de reserva",antes:"reservas2.sunrise@, luz.pedroza@, calidad.sunrise@",despues:"reservas2.sunrise@, maría.caballero@, calidad.sunrise@"},
+      {dialogo:"20-21",nombre:"Celebration",campo:"Contacto eventos",antes:"Luz.pedroza@ghlhoteles.com / +57 608 512 3988",despues:"maria.caballero@ghlhoteles.com / +57 316 2705321"},
+    ]},
+  {ciclo:"Jun-26",hotel:"GHL Style Barrancabermeja",contacto:"Luis Martinez",correo:"luis.martinez@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"Confirmó recibido (13/06) pero a la fecha no envió la revisión",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"GHL Style Bogotá Occidente",contacto:"Leidy Cely",correo:"jrecepcion.bogotaoccidente@ghlhoteles.com",envio:"02/06/2026",respuesta:"18/06/2026",mod:"Sí",desc:"10 diálogos modificados: contacto recepción/reservas/eventos, cajeros, fumadores, empleos, mascotas, spa, reuniones, celebraciones",fechaChatbot:"24/06/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",
+    mods:[
+      {dialogo:"16-02",nombre:"Contact staff — Recepción",campo:"Teléfono gratuito",antes:"+57 302 4913939",despues:"+57 302 7020259"},
+      {dialogo:"16-02",nombre:"Contact staff — Reserva",campo:"Teléfono gratuito",antes:"+57 302 4913939",despues:"+57 302 7020259"},
+      {dialogo:"16-02",nombre:"Contact staff — Eventos",campo:"Email",antes:"sandra.castillo@ghlhoteles.com",despues:"eventos.bogotaoccidente@ghlhoteles.com"},
+      {dialogo:"13-45",nombre:"Change & ATM",campo:"Cajeros/oficinas de cambio",antes:"House Changes Unidivisas; Cajero ATH Copidrogas (Banco de Bogotá)",despues:"Cajero Bancolombia; Cajero Banco de Bogotá — Complejo Zuca Plaza, Cota"},
+      {dialogo:"14-04",nombre:"Smoking",campo:"Tarifa limpieza de humo",antes:"0 COP",despues:"USD 100"},
+      {dialogo:"16-06",nombre:"Jobs & internships",campo:"Teléfono",antes:"+57 302 4913939",despues:"+57 302 7020259"},
+      {dialogo:"16-10",nombre:"Pets",campo:"Tasa para mascotas",antes:"90000 COP/día",despues:"Sin cobro"},
+      {dialogo:"17-15",nombre:"Spa hours",campo:"Disponibilidad de spa",antes:"Sin límite de tiempo, abierto todo el año",despues:"No contamos con SPA. Servicio de masajes, reserva con 24h de anticipación"},
+      {dialogo:"20-01",nombre:"Business meetings",campo:"Correo",antes:"sandra.castillo@ghlhoteles.com",despues:"eventos.bogotaoccidente@ghlhoteles.com"},
+      {dialogo:"20-02",nombre:"Business meeting reservation",campo:"Correo de reserva",antes:"sandra.castillo@ghlhoteles.com",despues:"eventos.bogotaoccidente@ghlhoteles.com"},
+      {dialogo:"20-21",nombre:"Celebration",campo:"Correo",antes:"sandra.castillo@ghlhoteles.com",despues:"eventos.bogotaoccidente@ghlhoteles.com"},
+      {dialogo:"20-22",nombre:"Celebration reservation",campo:"Correo de reserva",antes:"sandra.castillo@ghlhoteles.com",despues:"eventos.bogotaoccidente@ghlhoteles.com"},
+    ]},
+  {ciclo:"Jun-26",hotel:"GHL Style Neiva",contacto:"Carlos Robayo",correo:"yobani.robayo@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"GHL Style Yopal",contacto:"Mafy Daniela Rodriguez",correo:"daniela.rodriguez@ghlhoteles.com",envio:"02/06/2026",respuesta:"03/06/2026",mod:"Sí",desc:"18 diálogos modificados: contacto eventos/reservas, check-in/out, desayuno, room service, niños, objetos perdidos, lavandería, transfer, entretenimiento, empleos, mascotas, ascensor, accesibilidad, brunch, eventos",fechaChatbot:"26/06/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",
+    mods:[
+      {dialogo:"16-02",nombre:"Contact staff — Reserva/Eventos",campo:"Teléfono / celular",antes:"+57 605 5748686, sin celular",despues:"+57 608 6345999; Reserva cel. 322 857 3103 / Eventos cel. 322 857 3098"},
+      {dialogo:"11-01",nombre:"Check-in time",campo:"Early check-in",antes:"Desde 08:00, 100000 COP/habitación",despues:"Desde 07:00, 70.000 + IVA COP/habitación"},
+      {dialogo:"11-11",nombre:"Check-out time",campo:"Hora normal / precio tardío",antes:"Antes de 12:00; tardío 100000 COP",despues:"Antes de 13:00; tardío 70.000 + IVA COP"},
+      {dialogo:"12-02",nombre:"Breakfast rates",campo:"Precio (adulto → por persona)",antes:"22000 COP por adulto",despues:"48.000 COP por persona"},
+      {dialogo:"13-06",nombre:"Room service",campo:"Horario / código de marcado",antes:"24/7, marcar 1",despues:"6 am a 10 pm, marcar 5"},
+      {dialogo:"13-21",nombre:"Kids",campo:"Política de edad/tarifa",antes:"Gratis hasta 2 años; 11-18 años 50% tarifa adulto",despues:"Gratis hasta 11 años cumplidos; 12+ tarifa plena"},
+      {dialogo:"13-42",nombre:"Lost & found",campo:"Correo de contacto",antes:"reservas.yopal@ghlhoteles.com",despues:"habitaciones.yopal@ghlhoteles.com"},
+      {dialogo:"13-43",nombre:"Laundry",campo:"Disponibilidad de servicio",antes:"Sin servicio propio, recomienda tintorería externa",despues:"Hotel ahora cuenta con servicio de lavandería propio"},
+      {dialogo:"13-51",nombre:"Private transfer",campo:"Tipo de vehículo / tarifa",antes:"Taxi, $25.000 COP ambos sentidos",despues:"Vehículo privado, $35.000 COP ambos sentidos"},
+      {dialogo:"13-75",nombre:"Animation & entertainment",campo:"Programa de entretenimiento",antes:"Sin programa de entretenimiento",despues:"Terraza Llanera todos los jueves 8-10pm con gastronomía y música típica"},
+      {dialogo:"16-06",nombre:"Jobs & internships",campo:"Email / teléfono RRHH",antes:"talentohumano.yopal@ghlhoteles.com / +57 605 5748686",despues:"alejandra.fernandez@ghlhoteles.com / +57 608 6345999"},
+      {dialogo:"16-10",nombre:"Pets",campo:"Tipo mascota / cartilla / tasa",antes:"Todo tipo, cartilla no obligatoria, sin tasa",despues:"Solo perros y gatos, cartilla obligatoria, tasa $70.000 + IVA"},
+      {dialogo:"17-43",nombre:"Floor arrangement & elevator",campo:"Ascensor / pisos",antes:"Sin ascensor, 6 plantas",despues:"Con ascensor, 7 plantas"},
+      {dialogo:"17-44",nombre:"Disabled guest",campo:"Ducha adaptada",antes:"Habitaciones accesibles sin ducha de fácil acceso",despues:"Ahora equipadas con ducha de fácil acceso"},
+      {dialogo:"18-11",nombre:"Brunch",campo:"Disponibilidad",antes:"No ofrecen, recomienda restaurante externo",despues:"No ofrecemos brunch (se elimina recomendación externa)"},
+      {dialogo:"20-01 / 20-21",nombre:"Business meetings / Celebration",campo:"Teléfono / celular eventos",antes:"+57 605 5748686, sin celular",despues:"+57 608 6345999, celular 322 857 3098"},
+    ]},
+  {ciclo:"Jun-26",hotel:"Hotel Tequendama Bogotá",contacto:"Sara Judith Aguirre",correo:"sara.aguirre@ghlhoteles.com",envio:"02/06/2026",respuesta:"10/06/2026",mod:"Sí",desc:"20 diálogos modificados: contacto reservas, check-out, equipaje, desayuno, parking, room service, niños, taxi, fumadores, plancha, TV, empleos, mascotas, visitantes, gimnasio, accesibilidad, restaurante",fechaChatbot:"24/06/2026",actualizadoPor:"",comentarios:"2 correos el 10-jun",estado:"Actualizado",
+    mods:[
+      {dialogo:"16-05",nombre:"Contact Staff — Reserva",campo:"Teléfono",antes:"+57 601 3820300",despues:"+57 601 3822900"},
+      {dialogo:"10-04",nombre:"Reservation modification",campo:"Teléfono / móvil",antes:"+57 316 4619390",despues:"Tel: +57 601 3822900 / Móvil: +57 316 4619390"},
+      {dialogo:"10-06",nombre:"Reservation cancellation",campo:"Teléfono / móvil",antes:"+57 316 4619390",despues:"Tel: +57 601 3822900 / Móvil: +57 316 4619390"},
+      {dialogo:"10-17",nombre:"Travel agent",campo:"Teléfono",antes:"+57 316 4619390",despues:"+57 316 4399477"},
+      {dialogo:"10-32",nombre:"Long stay",campo:"Descuento por estancia larga",antes:"Sin descuento específico",despues:"% descuento según días de estancia — contactar ventas.tequendama@ghlhoteles.com / +57 316 4399477"},
+      {dialogo:"11-11",nombre:"Check-out time",campo:"Horario check-out / tardío",antes:"Check-out 12:00, tardío hasta 16:00",despues:"Check-out 13:00, tardío hasta 15:00"},
+      {dialogo:"11-21",nombre:"Store luggage",campo:"Límite de guardado",antes:"Sin límite especificado",despues:"No superior a un mes calendario"},
+      {dialogo:"12-02",nombre:"Breakfast rates",campo:"Precio adulto",antes:"55000 COP",despues:"52000 COP"},
+      {dialogo:"12-04",nombre:"Breakfast reservation",campo:"Política de reservas",antes:"No se toman reservas",despues:"Reserva disponible para grupos >5 personas — Tel: +57 316 2792440"},
+      {dialogo:"13-01",nombre:"Parking",campo:"Administración",antes:"Aparcamiento gratuito directo",despues:"Parqueadero tercerizado (gratuito para huéspedes, igual altura máx. 2,05m)"},
+      {dialogo:"13-06",nombre:"Room service",campo:"Código de marcado",antes:"Marcar 2356",despues:"Marcar *2"},
+      {dialogo:"13-21",nombre:"Kids",campo:"Edad gratis / tarifa 2do niño",antes:"Gratis hasta 2 años; tarifa 3-11 años 119000 COP/noche",despues:"Gratis de 0 a 11 años; tarifa 2do niño 0-11 años 119000 COP/noche"},
+      {dialogo:"13-53",nombre:"Taxi",campo:"Tarifas aeropuerto-hotel",antes:"Aeropuerto-Hotel $62.000 / Hotel-Aeropuerto $52.000",despues:"Aeropuerto-Hotel $59.000 / Hotel-Aeropuerto $45.000"},
+      {dialogo:"14-04",nombre:"Smoking",campo:"Tarifa limpieza de humo",antes:"0 COP",despues:"100 USD por noche (según tasa de cambio del día)"},
+      {dialogo:"15-35",nombre:"Iron and ironing board",campo:"Disponibilidad plancha",antes:"No disponible",despues:"Disponible en el closet de la habitación"},
+      {dialogo:"15-81",nombre:"TV",campo:"Guía de canales",antes:"Disponible en la habitación",despues:"Disponible en la habitación y en la App GHL Plus"},
+      {dialogo:"16-06",nombre:"Jobs & internships",campo:"Email RRHH",antes:"claudia.cruz@ghlhoteles.com",despues:"andrea.suarezd@ghlhoteles.com"},
+      {dialogo:"16-10",nombre:"Pets",campo:"Tipo de mascota / tasa",antes:"Todo tipo de mascotas; tasa 150000 COP/mascota",despues:"Solo perros o gatos; tasa 150000 COP/mascota cada 3 noches"},
+      {dialogo:"16-43",nombre:"Visitors policy",campo:"Política de visitantes",antes:"Bienvenidos solo con invitación",despues:"No se aceptan visitas en habitaciones, solo en áreas comunes (lobby, restaurantes, cafeterías)"},
+      {dialogo:"17-31",nombre:"Fitness gym",campo:"Ubicación / horario",antes:"Tercer piso, 06:00-22:00",despues:"Lobby 2, abierto 24 horas"},
+      {dialogo:"17-44",nombre:"Disabled guest",campo:"Accesibilidad",antes:"6 habitaciones accesibles, ducha adaptada",despues:"Propiedad NO preparada para movilidad reducida"},
+      {dialogo:"18-01",nombre:"Restaurant",campo:"Horario Restaurante Virrey",antes:"06:00 a 22:00",despues:"06:00 a 15:00"},
+    ]},
+  {ciclo:"Jun-26",hotel:"GHL Hotel Abadía Plaza",contacto:"Katerine Ospina Gil",correo:"suprecepcion.abadiaplaza@ghlhoteles.com",envio:"02/06/2026",respuesta:"09/06/2026",mod:"Sí",desc:"11 diálogos modificados: desayuno, parking, room service, actividades, niños, transfer, camas extra, plancha, balcón, marketing",fechaChatbot:"26/06/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",
+    mods:[
+      {dialogo:"12-01",nombre:"Breakfast time",campo:"Desayuno en habitación",antes:"No ofrecemos servicio de desayuno en habitaciones",despues:"Ofrecemos desayuno en habitaciones con costo adicional"},
+      {dialogo:"12-02",nombre:"Breakfast rates",campo:"Precio adulto / niños",antes:"Adulto 20500 COP / Niños (<11) 15000 COP",despues:"Adulto 35000 COP / Niños (<11) 28000 COP"},
+      {dialogo:"13-01",nombre:"Parking",campo:"Tarifa por hora → por día",antes:"Motos $7.000/hora — Vehículos $12.000/hora",despues:"Motos $8.000/24h — Vehículos $14.000/24h"},
+      {dialogo:"13-06",nombre:"Room service",campo:"Horario servicio",antes:"Disponible 24/7",despues:"Hasta las 21:30 pm"},
+      {dialogo:"13-13",nombre:"Activities",campo:"Descuentos en parques",antes:"15% descuento Bioparque Ukumarí y Termales Santa Rosa",despues:"Ya no contamos con dichos descuentos"},
+      {dialogo:"13-21",nombre:"Kids",campo:"Edad gratis / rangos tarifa",antes:"Gratis hasta 3 años; 4-13 años 40000 COP; 14-17 años 60000 COP",despues:"Gratis hasta 7 años; 8-12 años 40000 COP; 13+ 60000 COP"},
+      {dialogo:"13-51",nombre:"Private transfer",campo:"Tarifas aeropuerto-hotel",antes:"$28.000/$25.000 COP (1-4 personas)",despues:"$40.000 COP ambos sentidos (1-4 personas)"},
+      {dialogo:"15-23",nombre:"Extra bed",campo:"Disponibilidad cama supletoria",antes:"No disponible por razones de seguridad",despues:"Disponible — hasta 1 cama en habitaciones twin"},
+      {dialogo:"15-35",nombre:"Iron and ironing board",campo:"Plancha / vaporizador",antes:"No disponible ninguno",despues:"Ambos disponibles"},
+      {dialogo:"15-61",nombre:"Balcony & windows",campo:"Ventanas / balcón",antes:"Ventanas no se abren; todas con balcón",despues:"Ventanas se abren; algunas habitaciones tienen balcón"},
+      {dialogo:"16-15",nombre:"Social & photoshoot",campo:"Correo marketing",antes:"andrea.cardona@ghlhoteles.com",despues:"alexander.ospina@ghlhoteles.com"},
+    ]},
+  {ciclo:"Jun-26",hotel:"GHL Hotel Grand Barranquilla",contacto:"Jose Carlos Ibañez",correo:"jose.ibanez@ghlhoteles.com",envio:"02/06/2026",respuesta:"10/06/2026",mod:"Sí",desc:"8 diálogos modificados: contacto reservas, day pass, desayuno, niños, lavandería, transfer privado, fumadores, horario piscina",fechaChatbot:"24/06/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",
+    mods:[
+      {dialogo:"16-02",nombre:"Contact staff — Reserva",campo:"Teléfono",antes:"+57 605 3856060",despues:"+57 3168093065"},
+      {dialogo:"10-41",nombre:"Day use / Day Pass",campo:"Horario",antes:"10:00 a 17:00",despues:"09:00 a 17:00"},
+      {dialogo:"12-02",nombre:"Breakfast rates",campo:"Precio adulto / niños",antes:"Adulto 40000 COP / Niños (<11) 30000 COP",despues:"Adulto 45000 COP / Niños (6-11) 30000 COP"},
+      {dialogo:"13-21",nombre:"Kids",campo:"Tarifa infantil por edad",antes:"11-18 años: 70000 COP/noche",despues:"12-18 años: 90000 COP/noche"},
+      {dialogo:"13-43",nombre:"Laundry",campo:"Hora de devolución",antes:"Antes de las 10:00 (mismo día)",despues:"Antes de las 17:00 (mismo día)"},
+      {dialogo:"13-51",nombre:"Private transfer",campo:"Tarifas aeropuerto-hotel",antes:"$45.000/$47.000 COP según horario; regreso $30.000 COP",despues:"$86.000 COP vía Circunvalar / $96.000 COP vía Prosperidad (ambos sentidos)"},
+      {dialogo:"14-04",nombre:"Smoking",campo:"Tarifa limpieza de humo",antes:"0 COP",despues:"100 USD"},
+      {dialogo:"17-62",nombre:"Swimming pool hours",campo:"Horario piscina",antes:"09:00 – 19:00",despues:"09:00 – 21:00"},
+    ]},
+  {ciclo:"Jun-26",hotel:"LATAM XELA",contacto:"Gabriela Rodas",correo:"gabriela.rodas@ghlhoteles.com",envio:"02/06/2026",respuesta:"03/06/2026",mod:"Sí",desc:"22 diálogos modificados: migración de correos @latamhc.com a @ghlhoteles.com, check-in/out, desayuno, niños, objetos perdidos, factura, habitaciones conectadas, rooftop, restaurante, eventos",fechaChatbot:"24/06/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",
+    mods:[
+      {dialogo:"16-02",nombre:"Contact staff — Recepción",campo:"Email",antes:"recepcion.xela@latamhc.com",despues:"recepcion.latam@ghlhoteles.com"},
+      {dialogo:"16-02",nombre:"Contact staff — Reserva",campo:"Email",antes:"reservas.xela@latamhc.com",despues:"reservas.latam@ghlhoteles.com"},
+      {dialogo:"16-02",nombre:"Contact staff — Eventos",campo:"Email",antes:"eventos@latamhc.com",despues:"eventos.latam@ghlhoteles.com"},
+      {dialogo:"10-04 / 10-06 / 13-17 / 15-99 / 17-43",nombre:"Modificación, cancelación, solicitudes especiales",campo:"Correo de contacto",antes:"reservas.xela@latamhc.com",despues:"reservas.latam@ghlhoteles.com"},
+      {dialogo:"11-02",nombre:"Early Check-In reservation",campo:"Correo de contacto",antes:"reservas.xela@latamhc.com",despues:"reservas.latam@ghlhoteles.com"},
+      {dialogo:"11-11",nombre:"Check-out time",campo:"Hora normal de check-out",antes:"Antes de las 12:00",despues:"Antes de las 13:00"},
+      {dialogo:"12-02",nombre:"Breakfast rates",campo:"Precio adulto / niños",antes:"Adulto 70 USD / Niños (<11) 59 USD",despues:"Adulto 20 USD / Niños (<11) 20 USD"},
+      {dialogo:"13-21",nombre:"Kids",campo:"Edad gratis / tarifa infantil",antes:"Gratis hasta 11 años; 12-13 años 20 USD/noche",despues:"Tarifa única 0-12 años: 10 USD/noche (se elimina edad gratis)"},
+      {dialogo:"13-42",nombre:"Lost & Found",campo:"Correo / teléfono",antes:"supervisor.habitaciones@latamhc.com / +57 (601) 423 3001",despues:"reservas.latam@ghlhoteles.com / +502 7797 7676"},
+      {dialogo:"13-47",nombre:"Invoice",campo:"Correo / datos requeridos",antes:"reservas.xela@latamhc.com, sin NIT",despues:"reservas.latam@ghlhoteles.com, se agrega NIT"},
+      {dialogo:"14-02",nombre:"Connecting & close accommodation",campo:"Disponibilidad por tipo",antes:"Executive King y Deluxe Double Twin conectadas",despues:"Solo Deluxe Double Twin (Executive King ya no disponible conectada)"},
+      {dialogo:"16-03",nombre:"Service request & complaint",campo:"Correo de quejas",antes:"gabriela.rodas@ghlhoteles.com",despues:"ana.rodas@ghlhoteles.com"},
+      {dialogo:"16-06",nombre:"Jobs & internships",campo:"Email RRHH",antes:"talento.humano@latamhc.com",despues:"talentohumano.latam@ghlhoteles.com"},
+      {dialogo:"17-34",nombre:"Rooftop",campo:"Acceso y formato de horario",antes:"Abierto a huéspedes y visitantes, horario detallado por día",despues:"Solo huéspedes, horario unificado 8:00-21:00"},
+      {dialogo:"17-35",nombre:"Rooftop reservation",campo:"Correo de reserva",antes:"recepcion.xela@latamhc.com",despues:"eventos.latam@ghlhoteles.com"},
+      {dialogo:"18-01",nombre:"Restaurant",campo:"Horario / capacidad",antes:"06:30-21:00, capacidad 1 persona (error)",despues:"06:00-22:00, capacidad 85 pax"},
+      {dialogo:"20-01 / 20-02 / 20-21 / 20-22",nombre:"Business meetings, reuniones, celebraciones",campo:"Correo de eventos",antes:"eventos@latamhc.com",despues:"eventos.latam@ghlhoteles.com"},
+    ]},
+  {ciclo:"Jun-26",hotel:"Makani Luxury Wanderlust",contacto:"Jose Macea",correo:"jose.macea@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"Park Lake Luxury",contacto:"—",correo:"reservas.parklake@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"Sin nombre de contacto",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"San Lazaro Art",contacto:"Keilis Mercado",correo:"keilis.mercado@ghlhoteles.com",envio:"02/06/2026",respuesta:"04/06/2026",mod:"Sí",desc:"Transferes diurno/nocturno y condiciones adicionales",fechaChatbot:"02/07/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",mods:[{dialogo:"—",nombre:"Transfer",campo:"Precio diurno",antes:"Anterior",despues:"$80.000"},{dialogo:"—",nombre:"Transfer",campo:"Precio nocturno",antes:"Anterior",despues:"$100.000 (máx 2 personas)"}]},
+  {ciclo:"Jun-26",hotel:"Sonesta Bucaramanga",contacto:"Jeferson Reyes",correo:"jeferson.reyes@ghlhoteles.com",envio:"02/06/2026",respuesta:"19/06/2026",mod:"Sí",desc:"9 diálogos modificados: tarifas desayuno, room service, kids, transporte, habitaciones, eléctrico, gimnasio, reservas restaurante",fechaChatbot:"02/07/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",
+    mods:[
+      {dialogo:"12-02",nombre:"Breakfast rates",campo:"Precio adulto",antes:"48000 COP",despues:"L-V: $55.000 COP / S-D-Festivo: $69.000 COP"},
+      {dialogo:"12-02",nombre:"Breakfast rates",campo:"Precio niños (<11 años)",antes:"34000 COP",despues:"$36.000 COP"},
+      {dialogo:"13-06",nombre:"Room service",campo:"Horario servicio",antes:"Disponible 24/7",despues:"06:00 a.m. a 11:00 p.m., todos los días"},
+      {dialogo:"13-21",nombre:"Kids",campo:"Tarifa niños 5-11 años",antes:"34000 COP/noche",despues:"36.000 COP/noche"},
+      {dialogo:"13-50",nombre:"Airport & train station public transport",campo:"Aeropuerto / terrestre",antes:"Aeropuerto Palonegro (BGA), 47 km/29 mi",despues:"Aeropuerto Palonegro 18.2 km/32 min; Terminal Transportes Bucaramanga 3.1 km/15 min"},
+      {dialogo:"14-01",nombre:"Accommodation",campo:"Equipamiento cama (King y Handicap)",antes:"1 cama king size",despues:"1 cama king californiana"},
+      {dialogo:"15-48",nombre:"Electrical & mobile phone facilities",campo:"Voltaje / USB",antes:"220-240V, sin USB",despues:"110V, con USB en mesa de noche"},
+      {dialogo:"17-31",nombre:"Fitness gym",campo:"Horario gimnasio",antes:"Abierto todo el día 24/24",despues:"05:00 a.m. a 10:00 p.m."},
+      {dialogo:"18-02 / 18-03",nombre:"Restaurant reservation / cancelación",campo:"Correo de contacto Peregrina Rooftop",antes:"reservas.sonestabucaramanga@ghlhoteles.com",despues:"ayb.sonestabucaramanga@ghlhoteles.com"},
+    ]},
+  {ciclo:"Jun-26",hotel:"Sonesta Cali",contacto:"Lorena Figueroa",correo:"lorena.figueroa@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"Sonesta Cartagena",contacto:"Liliana Rodriguez",correo:"liliana.rodriguez@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"Sonesta Cusco",contacto:"Adolfo Alfaro",correo:"adolfo.alfaro@ghlhoteles.com",envio:"02/06/2026",respuesta:"09/06/2026",mod:"Sí",desc:"14 diálogos modificados: contacto recepción/eventos, tarifas, pagos, parking, wifi, taxi, habitaciones, quejas, restaurante, reuniones, celebraciones",fechaChatbot:"26/06/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",
+    mods:[
+      {dialogo:"16-02",nombre:"Contact staff",campo:"Email Recepción / Eventos",antes:"recepcion.sonestahotelcusco@ / jorge.galdos@ghlhoteles.com",despues:"recepcion.sonestacusco@ / eventos.sonestacusco@ghlhoteles.com"},
+      {dialogo:"10-26",nombre:"Rate plans & upgrades",campo:"Tipos de tarifa",antes:"3 tipos: alojamiento+desayuno, media pensión, sin desayuno",despues:"1 solo tipo: alojamiento y desayuno"},
+      {dialogo:"10-71",nombre:"Payment method",campo:"Límite pago efectivo",antes:"Sin límite especificado",despues:"Máximo USD 500.00 o PEN S/. 2,000.00"},
+      {dialogo:"13-01",nombre:"Parking",campo:"Referencia parking cercano",antes:"Nueva Alta Parking con dirección y teléfono",despues:"Consultar en recepción (se retira info del tercero)"},
+      {dialogo:"13-11",nombre:"Wifi & Internet",campo:"Cobertura piscina/playa",antes:"Sin cobertura wifi en piscina y playa",despues:"No contamos con áreas de piscina y playa"},
+      {dialogo:"3-53",nombre:"Taxi",campo:"Empresa y contacto",antes:"Yanapay — Frank Estete +51 997 4626 41",despues:"Cab Tours — Central Telefónica +51 942 5454 54"},
+      {dialogo:"13-54",nombre:"Taxi reservation",campo:"Correo de reserva",antes:"recepcion.sonestahotelcusco@ghlhoteles.com",despues:"guestservice.sonestacusco@ghlhoteles.com"},
+      {dialogo:"14-01",nombre:"Accommodation",campo:"Inventario de habitaciones",antes:"Ejec. Matrim/Suite 5, Ejec. Twin 7, Std Matrim 70, Std Twin 45",despues:"Ejec. Matrim/Suite 8, Ejec. Twin 4, Std Matrim 71, Std Twin 44"},
+      {dialogo:"14-02",nombre:"Connecting & close accommodation",campo:"Habitaciones comunicadas",antes:"Disponemos de habitaciones comunicadas",despues:"NO disponemos de habitaciones comunicadas"},
+      {dialogo:"16-03",nombre:"Service request & complaint",campo:"Correo de quejas",antes:"sonestacusco@ghlhoteles.com",despues:"qam.sonestacusco@ghlhoteles.com"},
+      {dialogo:"18-01",nombre:"Restaurant",campo:"Código de vestimenta",antes:"Casual con detalle por género (jeans, vestido, etc.)",despues:"Solo 'Casual' (se elimina detalle por género)"},
+      {dialogo:"18-02 / 18-03 / 18-04",nombre:"Restaurant reservation / cancelación / modificación",campo:"Correo de contacto",antes:"sonestacusco@ghlhoteles.com",despues:"restaurante.sonestacusco@ghlhoteles.com"},
+      {dialogo:"20-02",nombre:"Business meeting reservation",campo:"Correo de reserva",antes:"jorge.galdos@ghlhoteles.com",despues:"eventos.sonestacusco@ghlhoteles.com"},
+      {dialogo:"20-21",nombre:"Celebration",campo:"Correo de contacto eventos",antes:"jorge.galdos@ghlhoteles.com",despues:"eventos.sonestacusco@ghlhoteles.com"},
+    ]},
+  {ciclo:"Jun-26",hotel:"Sonesta El Olivar",contacto:"Andrea Silvana Zevallos",correo:"andrea.zevallos@ghlhoteles.com",envio:"02/06/2026",respuesta:"18/06/2026",mod:"Sí",desc:"Observación sobre número telefónico (deriva directamente)",fechaChatbot:"02/07/2026",actualizadoPor:"",comentarios:"Respuesta tardía — disculpa por demora",estado:"Actualizado",
+    mods:[{dialogo:"—",nombre:"Teléfono",campo:"Número telefónico",antes:"Versión anterior",despues:"⚠ Verificar en correo — número truncado en vista previa"}]},
+  {ciclo:"Jun-26",hotel:"Sonesta Arequipa",contacto:"Tania Catacora",correo:"jefederecepcion.sonestaarequipa@ghlhoteles.com",envio:"02/06/2026",respuesta:"09/06/2026",mod:"Sí",desc:"Modificaciones adjuntas + consulta canales",fechaChatbot:"24/06/2026",actualizadoPor:"",comentarios:"Consulta: ¿cambios visibles en otros canales?",estado:"Actualizado",mods:[{dialogo:"—",nombre:"Varios",campo:"Ver adjunto",antes:"—",despues:"Archivo adjunto + pregunta de seguimiento"}]},
+  {ciclo:"Jun-26",hotel:"Sonesta Bogotá",contacto:"Catalina Rojas",correo:"catalina.rojas@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"Sonesta Ibagué",contacto:"Wilmer Rodriguez",correo:"wilmer.rodriguez@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"Sonesta Loja",contacto:"Miryam Ramirez",correo:"miryam.ramirez@ghlhoteles.com",envio:"02/06/2026",respuesta:"05/06/2026",mod:"Sí",desc:"18 diálogos modificados: contacto (WhatsApp), day pass, check-in, desayuno, room service, wifi, niños, transfer, taxi, fumadores, cama extra, balcón, TV, mascotas, spa, restaurante",fechaChatbot:"26/06/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",
+    mods:[
+      {dialogo:"16-02",nombre:"Contact staff",campo:"WhatsApp Reserva / Eventos",antes:"Sin WhatsApp",despues:"Reserva +593 979410854 / Eventos +593 987688651 y +593 987233925"},
+      {dialogo:"10-04",nombre:"Reservation modification",campo:"WhatsApp",antes:"Sin WhatsApp",despues:"+593 979410854"},
+      {dialogo:"10-41",nombre:"Day use / day pass",campo:"Disponibilidad",antes:"No disponible",despues:"Disponible — consultar reservas@sonestaloja.com / +593 7 2589000 / WhatsApp"},
+      {dialogo:"11-01",nombre:"Check-in time",campo:"Early check-in",antes:"Desde 06:00 por 40 USD",despues:"Mismo precio, se agrega 'sujeto a disponibilidad'"},
+      {dialogo:"12-01",nombre:"Breakfast time",campo:"Horario y servicio en habitación",antes:"07:00-11:00, sin desayuno en habitación",despues:"07:00-10:30, ahora con servicio de desayuno en habitación (carta)"},
+      {dialogo:"12-02",nombre:"Breakfast rates",campo:"Precio adulto",antes:"10 USD",despues:"15 USD"},
+      {dialogo:"13-06",nombre:"Room service",campo:"Horario servicio",antes:"Disponible 24/7",despues:"7:00 a 22:30"},
+      {dialogo:"13-11",nombre:"Wifi & Internet",campo:"Velocidad / cobertura",antes:"60 megas; sin cobertura en piscina y playa",despues:"140 megas; cobertura en piscina (se elimina playa del texto)"},
+      {dialogo:"13-21",nombre:"Kids",campo:"Edad gratis / tarifa adultos",antes:"Gratis hasta 10 años; tarifa niños 11-18 años 7 USD/noche",despues:"Gratis hasta 12 años; tarifa adulto desde 13 años $26.55/noche (se elimina tarifa infantil)"},
+      {dialogo:"13-51",nombre:"Private transfer",campo:"Tarifa aeropuerto-hotel",antes:"$24,50 USD por persona",despues:"$27,50 USD por persona"},
+      {dialogo:"13-53",nombre:"Taxi",campo:"Tarifas",antes:"Aeropuerto $24,50 / Parque recreacional $1,80",despues:"Aeropuerto $27,50 / Parque recreacional $2,00"},
+      {dialogo:"14-04",nombre:"Smoking",campo:"Detectores de humo",antes:"Habitaciones sin detectores",despues:"Habitaciones equipadas con detectores de humo"},
+      {dialogo:"15-23",nombre:"Extra bed",campo:"Costo cama extra",antes:"20 USD/noche",despues:"Sin costo adicional"},
+      {dialogo:"15-61",nombre:"Balcony & Windows",campo:"Disponibilidad balcón",antes:"Todas las habitaciones tienen balcón",despues:"Ninguna tiene balcón excepto la Suite Presidencial"},
+      {dialogo:"15-81",nombre:"TV",campo:"Guía de canales",antes:"En la habitación",despues:"En GHLplus"},
+      {dialogo:"16-10",nombre:"Pets",campo:"Tipo de mascota / tasas",antes:"Todo tipo, sin tasa, cartilla no obligatoria",despues:"Solo perros y gatos, cartilla obligatoria, $25.00/noche (mascota y animal de servicio)"},
+      {dialogo:"17-15",nombre:"Spa hours",campo:"Disponibilidad spa",antes:"Sin límite de tiempo, abierto todo el año",despues:"No tenemos Spa"},
+      {dialogo:"18-01",nombre:"Restaurant",campo:"Capacidad y oferta gastronómica",antes:"Capacidad 50 personas, ofrece tronas, código de vestimenta detallado",despues:"Capacidad 75 personas, desayuno/almuerzo/cena buffet y carta, cafetería-bar (se elimina código de vestimenta)"},
+    ]},
+  {ciclo:"Jun-26",hotel:"Sonesta Osorno",contacto:"Cristina Sanzana",correo:"cristina.sanzana@ghlhoteles.com",envio:"02/06/2026",respuesta:"10/06/2026",mod:"Sí",desc:"8 diálogos modificados: transfer privado, balcón/vistas, propinas, bar, spa, gimnasio, restaurantes",fechaChatbot:"26/06/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",
+    mods:[
+      {dialogo:"13-51",nombre:"Private transfer",campo:"Descripción servicio",antes:"Servicio aeropuerto-hotel y centro ciudad, previa coordinación",despues:"Se agrega: precios dependen del número de personas y destino final"},
+      {dialogo:"15-61",nombre:"Balcony & Windows",campo:"Habitación King — balcón",antes:"Algunas habitaciones tienen balcón",despues:"Balcón no disponible"},
+      {dialogo:"15-62",nombre:"View",campo:"Vistas por categoría",antes:"Todas las habitaciones: vista del río (parcial)",despues:"Estándar: sin vista / Ejecutivas: ciudad y río (parcial) / Junior Suite+: ciudad y río"},
+      {dialogo:"16-25",nombre:"Tips policy",campo:"Propina sugerida",antes:"15%",despues:"10%"},
+      {dialogo:"17-01",nombre:"Bar",campo:"Disponibilidad de comida",antes:"No se sirve comidas",despues:"Carta de sándwich y picoteos"},
+      {dialogo:"17-15",nombre:"Spa hours",campo:"Disponibilidad de spa",antes:"Sin límite de tiempo, abierto todo el año",despues:"No tenemos Spa"},
+      {dialogo:"17-31",nombre:"Fitness gym",campo:"Convenio gimnasio externo",antes:"Gimnasio New Body Gym NBG — 0.5 km de la propiedad",despues:"Convenio con Gimnasio Sportlife (Plaza Sol de los Lagos) — acceso liberado para huéspedes"},
+      {dialogo:"18-01",nombre:"Restaurant",campo:"El Ovillo / Cook's",antes:"El Ovillo 12:00-23:00, Cook's solo huéspedes 19:00-23:00",despues:"Renombrado El Olivillo 12:30-23:00; Cook's abierto a huéspedes y visitantes 19:30-23:00"},
+    ]},
+  {ciclo:"Jun-26",hotel:"Sonesta Pereira",contacto:"Edwar Pacanchique",correo:"edwar.pacanchique@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"Sonesta Puno",contacto:"Delmy Nuñez",correo:"delmy.nunez@ghlhoteles.com",envio:"02/06/2026",respuesta:"04/06/2026",mod:"Sí",desc:"10 diálogos modificados: tel. reservas (modif. y cancel.), check-in 12m, tarifa niño adicional, taxi, transfer aeropuerto, distribución habitaciones, mascotas, correo redes, distancia al centro",fechaChatbot:"26/06/2026",actualizadoPor:"",comentarios:"Tarifa niño: hasta 11 años aplica USD 20.00/noche; desde 12 años se cobra tarifa de adulto. Distribución de habitaciones corresponde al diálogo 14-01 Accomodation. Taxi: el hotel aclara que el aeropuerto en taxi NO es 80 USD por 2 personas.",estado:"Actualizado",mods:[
+      {dialogo:"10-04",nombre:"Reservation modification",campo:"Teléfono reservas",antes:"+51 51 364112",despues:"+51 51 364111"},
+      {dialogo:"10-06",nombre:"Reservation cancellation",campo:"Teléfono reservas",antes:"+51 51 364112",despues:"+51 51 364111"},
+      {dialogo:"11-01",nombre:"Check-in time",campo:"Hora de check-in",antes:"Check-in a cualquier hora después de las 11:00; early check-in desde 07:00 por 40 USD",despues:"Check-in a cualquier hora después de las 12:00 (mediodía); early check-in desde 07:00 por 40 USD"},
+      {dialogo:"10-21",nombre:"Kids",campo:"Tarifa niño adicional y rango de edad",antes:"Niño hasta 11 años gratis; 12-18 años 13 USD/noche; adulto desde 19 años",despues:"Niño adicional (hasta 11 años) USD 20.00/noche; desde 12 años aplica tarifa de adulto"},
+      {dialogo:"13-53",nombre:"Taxi",campo:"Tarifas de taxi",antes:"Puerto 3 USD; Downtown 3 USD; Aeropuerto Juliaca 11 USD",despues:"Puerto USD 5.00; Ciudad USD 50.00 (aclaración: aeropuerto en taxi NO es 80 USD x 2 personas)"},
+      {dialogo:"13-51",nombre:"Private transfer",campo:"Tarifa transfer aeropuerto",antes:"1-3 personas 30 USD (S/120); 4-6 personas 38 USD (S/150)",despues:"USD 80.00 hasta 3 personas; +20 USD por cada huésped adicional"},
+      {dialogo:"14-01",nombre:"Accomodation",campo:"Distribución de habitaciones (Room to sell)",antes:"—",despues:"05 triples (3 camas queen) vista a la montaña; 23 twin (2 camas queen) vista a la montaña; 05 doble (1 cama King) vista a la montaña; 25 twin (2 camas queen) vista al lago; 12 doble (1 cama King) vista al lago"},
+      {dialogo:"16-10",nombre:"Pets",campo:"Política de mascotas",antes:"No se admiten mascotas (ni apoyo emocional certificado ni servicio/asistencia)",despues:"Se aceptan mascotas USD 25.00/noche; animales de apoyo emocional con certificación se aceptan sin costo (por ley)"},
+      {dialogo:"16-15",nombre:"Social & photoshoot",campo:"Correo de contacto",antes:"ubaldo.laquise@ghlhoteles.com (marketing)",despues:"calidad.spipuno@ghlhoteles.com (no hay área de marketing en el hotel)"},
+      {dialogo:"19-03",nombre:"City center",campo:"Distancia al centro",antes:"732 km del centro; en coche 14 h 13 min",despues:"Aprox. 4 km / 10 minutos en coche"}
+    ]},
+  {ciclo:"Jun-26",hotel:"Sonesta Yucay",contacto:"Monica Chirinos",correo:"monica.chirinos@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jun-26",hotel:"Sonesta Valledupar",contacto:"Emerson David Cotes",correo:"emerson.cotes@ghlhoteles.com",envio:"02/06/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+
+  // ══════════════ JULIO 2026 — agregar aquí ══════════════
+  {ciclo:"Jul-26",hotel:"Arsenal",contacto:"Luis Saez",correo:"luis.saez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Biohotel",contacto:"Maria Del Pilar Narvaez",correo:"pilar.narvaez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Bioxury",contacto:"Andrea Rojas",correo:"catalina.rojas@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"⚠ El correo catalina.rojas@ghlhoteles.com ahora corresponde a Sonesta Bogotá (Catalina Rojas) — verificar/definir contacto propio de Bioxury",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Geotel Antofagasta",contacto:"Nelson Uriel Perez Ortiz",correo:"nelson.perez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Geotel Calama",contacto:"Katherine Mora",correo:"katherine.mora@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Collection 93",contacto:"James Mendoza",correo:"james.mendoza@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Armeria Real",contacto:"Saray Estrada",correo:"Saray.estrada@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Collection Hamilton",contacto:"Wilson Bohorquez",correo:"andres.bohorquez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Grand Villavicencio",contacto:"Ingrid Mendez",correo:"jimena.mendez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Hotel Capital",contacto:"Maira Piza",correo:"maira.piza@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Lago Titicaca",contacto:"Milagros Velazco Reyes",correo:"milagros.velazco@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Montería",contacto:"Jose Medina",correo:"mauricio.medina@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Portón Medellín",contacto:"Jose Fernando Villareal",correo:"jose.villareal@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Relax Club Hotel el Puente",contacto:"Maria Gomez",correo:"angelica.gomez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Relax Hotel Corales de Indias",contacto:"Andres Narvaez",correo:"andres.narvaez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Relax Hotel Costa Azul",contacto:"Marlis Marriaga",correo:"marlys.marriaga@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Relax Hotel Sunrise",contacto:"Juan Martinez",correo:"juan.martinez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Style Barrancabermeja",contacto:"Luis Martinez",correo:"luis.martinez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Style Bogotá Occidente",contacto:"Leidy Cely",correo:"jrecepcion.bogotaoccidente@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Style Neiva",contacto:"Carlos Robayo",correo:"yobani.robayo@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Style Yopal",contacto:"Mafy Daniela Rodriguez",correo:"daniela.rodriguez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Hotel Tequendama Bogotá",contacto:"Sara Judith Aguirre",correo:"sara.aguirre@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Hotel Abadía Plaza",contacto:"Katerine Ospina Gil",correo:"suprecepcion.abadiaplaza@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"GHL Hotel Grand Barranquilla",contacto:"Jose Carlos Ibañez",correo:"jose.ibanez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"LATAM XELA",contacto:"Gabriela Rodas",correo:"gabriela.rodas@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Makani Luxury Wanderlust",contacto:"Jose Macea",correo:"jose.macea@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Park Lake Luxury",contacto:"—",correo:"reservas.parklake@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"San Lazaro Art",contacto:"Keilis Mercado",correo:"keilis.mercado@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Sonesta Bucaramanga",contacto:"Jeferson Reyes",correo:"jeferson.reyes@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Sonesta Cali",contacto:"Lorena Figueroa",correo:"lorena.figueroa@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Sonesta Cartagena",contacto:"Liliana Rodriguez",correo:"liliana.rodriguez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Sonesta Cusco",contacto:"Adolfo Alfaro",correo:"adolfo.alfaro@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Sonesta El Olivar",contacto:"Andrea Silvana Zevallos",correo:"andrea.zevallos@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Sonesta Arequipa",contacto:"Tania Catacora",correo:"jefederecepcion.sonestaarequipa@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Sonesta Bogotá",contacto:"Catalina Rojas",correo:"catalina.rojas@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Sonesta Ibagué",contacto:"Wilmer Rodriguez",correo:"wilmer.rodriguez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Sonesta Loja",contacto:"Miryam Ramirez",correo:"miryam.ramirez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Sonesta Osorno",contacto:"Cristina Sanzana",correo:"cristina.sanzana@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Sonesta Pereira",contacto:"Edwar Pacanchique",correo:"edwar.pacanchique@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Sonesta Puno",contacto:"Delmy Nuñez",correo:"delmy.nunez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Sonesta Yucay",contacto:"Monica Chirinos",correo:"monica.chirinos@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Jul-26",hotel:"Sonesta Valledupar",contacto:"Emerson David Cotes",correo:"emerson.cotes@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+
+];
+
+// ─────────────────────────────────────────────
+// LÓGICA
+// ─────────────────────────────────────────────
+let activeMes = "Todos";
+let sortCol = -1, sortAsc = true;
+
+function getMeses() {
+  const set = new Set(allData.map(d => d.ciclo));
+  return ["Todos", ...Array.from(set).sort()];
+}
+
+function getFiltered() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const mod = document.getElementById('filterMod').value;
+  const status = document.getElementById('filterStatus').value;
+  return allData.filter(h => {
+    const matchMes = activeMes === "Todos" || h.ciclo === activeMes;
+    const matchQ = !q || [h.hotel,h.contacto,h.correo,h.desc,h.comentarios,h.ciclo].some(f=>(f||'').toLowerCase().includes(q));
+    const matchMod = !mod || h.mod === mod;
+    const matchStatus = !status || h.estado === status;
+    return matchMes && matchQ && matchMod && matchStatus;
+  });
+}
+
+function renderMesTabs() {
+  const bar = document.getElementById('mesBar');
+  bar.innerHTML = getMeses().map(m => `
+    <div class="mes-tab${m==='Todos'?' mes-tab-all':''}${m===activeMes?' active':''}" onclick="setMes('${m}')">${m}</div>
+  `).join('');
+}
+
+function setMes(mes) {
+  activeMes = mes;
+  renderMesTabs();
+  applyFilters();
+}
+
+function statusBadge(s) {
+  const map = {"Actualizado":"actualizado","Pendiente actualización":"pendiente","Sin respuesta":"sin-respuesta","Sin modificaciones":"sin-mod"};
+  return `<span class="badge ${map[s]||''}">${s}</span>`;
+}
+
+function modSpan(m) {
+  if(m==="Sí") return `<span class="mod-si">✓ Sí</span>`;
+  if(m==="No") return `<span class="mod-no">No</span>`;
+  return `<span class="mod-pend">—</span>`;
+}
+
+function buildModTable(mods) {
+  if(!mods||!mods.length) return '<em style="color:#999;font-size:11px">Sin detalle de modificaciones registrado.</em>';
+  return `<table class="mod-table">
+    <thead><tr><th>Diálogo</th><th>Nombre</th><th>Campo</th><th>Antes</th><th>Después</th></tr></thead>
+    <tbody>${mods.map(m=>`<tr>
+      <td>${m.dialogo}</td><td>${m.nombre}</td><td>${m.campo}</td>
+      <td class="before">${m.antes}</td><td class="after">${m.despues}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  if(!data.length) {
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="icon">🔍</div>Sin resultados para los filtros seleccionados.</div></td></tr>`;
+    document.getElementById('countLabel').textContent = '0 registros';
+    renderKPIs([]);
+    return;
+  }
+  data.forEach((h,i) => {
+    const mainRow = document.createElement('tr');
+    mainRow.innerHTML = `
+      <td class="center"><button class="expand-btn" onclick="toggleDetail(${i},this)">▶</button></td>
+      <td class="hotel">${h.hotel}</td>
+      <td class="contact">${h.contacto}<br><span style="color:#aaa;font-size:10px">${h.correo}</span></td>
+      <td class="center"><span class="mes-chip">${h.ciclo}</span></td>
+      <td class="date">${h.envio}</td>
+      <td class="date">${h.respuesta||'<span style="color:#ccc">—</span>'}</td>
+      <td class="center">${modSpan(h.mod)}</td>
+      <td class="desc">${h.desc||'<span style="color:#ccc">—</span>'}</td>
+      <td class="date">${h.fechaChatbot||'<span style="color:#ccc">—</span>'}</td>
+      <td class="desc">${h.comentarios||'<span style="color:#ccc">—</span>'}</td>
+      <td>${statusBadge(h.estado)}</td>
+    `;
+    tbody.appendChild(mainRow);
+
+    const detailRow = document.createElement('tr');
+    detailRow.className = 'detail-row';
+    detailRow.id = `detail-${i}`;
+    detailRow.innerHTML = `<td colspan="11"><div class="detail-inner">
+      <h4>Detalle de modificaciones — ${h.hotel} &nbsp;|&nbsp; ${h.ciclo}</h4>
+      ${buildModTable(h.mods)}
+    </div></td>`;
+    tbody.appendChild(detailRow);
+  });
+  document.getElementById('countLabel').textContent = `${data.length} registro${data.length!==1?'s':''} ${activeMes!=='Todos'?'· '+activeMes:'· todos los ciclos'}`;
+  renderKPIs(data);
+  updateHeader(data);
+}
+
+function toggleDetail(idx, btn) {
+  const row = document.getElementById(`detail-${idx}`);
+  const open = row.style.display === 'table-row';
+  row.style.display = open ? 'none' : 'table-row';
+  btn.textContent = open ? '▶' : '▼';
+}
+
+// Conteos por propiedad DISTINTA (siempre 42): en la vista "Todos" no se suman los ciclos
+function stats(data) {
+  const hotels = [...new Set(data.map(d=>d.hotel))];
+  const has = (h,pred) => data.some(d=>d.hotel===h && pred(d));
+  const total = hotels.length;
+  const respondieron = hotels.filter(h=>has(h,d=>d.respuesta)).length;
+  const conMod = hotels.filter(h=>has(h,d=>d.mod==="Sí")).length;
+  const actualizados = hotels.filter(h=>has(h,d=>d.estado==="Actualizado")).length;
+  return {total, respondieron, sinResp: total-respondieron, conMod, sinMod: respondieron-conMod, actualizados};
+}
+
+function renderKPIs(data) {
+  const {total, respondieron, sinResp, conMod, actualizados} = stats(data);
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kpi"><div class="num">${total}</div><div class="lbl">Propiedades</div></div>
+    <div class="kpi"><div class="num" style="color:#276221">${respondieron}</div><div class="lbl">Respondieron</div></div>
+    <div class="kpi"><div class="num" style="color:#9c0006">${sinResp}</div><div class="lbl">Sin respuesta</div></div>
+    <div class="kpi"><div class="num" style="color:#2a5e95">${conMod}</div><div class="lbl">Con modificaciones</div></div>
+    <div class="kpi"><div class="num" style="color:#856404">${actualizados}</div><div class="lbl">Actualizados en chatbot</div></div>
+  `;
+  renderProgress(data);
+}
+
+const CICLO_PALETTE = [
+  ["#185FA5","#dbeafe"],["#065F46","#d1fae5"],["#92400E","#fef3c7"],
+  ["#9D174D","#fce7f3"],["#4C1D95","#ede9fe"],["#7C2D12","#ffedd5"]
+];
+
+function renderProgress(data) {
+  if(!data.length){ document.getElementById('progressWrap').innerHTML=''; return; }
+  const {total, respondieron, conMod, sinMod, sinResp, actualizados} = stats(data);
+  const pct = total ? Math.round(respondieron/total*100) : 0;
+  // % de actualización en chatbot sobre los hoteles que reportaron modificaciones
+  const pctChatbot = conMod ? Math.round(actualizados/conMod*100) : 0;
+
+  // Per-ciclo breakdown (only when "Todos" or multiple ciclos visible)
+  const ciclosEnVista = [...new Set(data.map(d=>d.ciclo))].sort();
+  let cicloRows = '';
+  if(ciclosEnVista.length > 1) {
+    cicloRows = `<div class="progress-by-ciclo">` +
+      ciclosEnVista.map((c,i)=>{
+        const d = data.filter(h=>h.ciclo===c);
+        const r = d.filter(h=>h.respuesta).length;
+        const p = d.length ? Math.round(r/d.length*100) : 0;
+        const [fg, bg] = CICLO_PALETTE[i % CICLO_PALETTE.length];
+        return `<div class="ciclo-bar-row">
+          <div class="ciclo-bar-name" style="color:${fg}">${c}</div>
+          <div class="ciclo-bar-track">
+            <div class="ciclo-bar-fill" style="width:${p}%;background:${fg}"></div>
+          </div>
+          <div class="ciclo-bar-pct" style="color:${fg};font-weight:600">${p}%</div>
+        </div>`;
+      }).join('') + `</div>`;
+  }
+
+  document.getElementById('progressWrap').innerHTML = `
+    <div class="progress-block">
+      <div class="progress-header">
+        <div class="progress-label">% de cumplimiento — hoteles que respondieron el correo</div>
+        <div><span class="progress-pct">${pct}%</span><span class="progress-sub">${respondieron} de ${total} hoteles</span></div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progFill" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="progress-block">
+      <div class="progress-header">
+        <div class="progress-label">% de cumplimiento — actualizados en el chatbot</div>
+        <div><span class="progress-pct" style="color:#92400E">${pctChatbot}%</span><span class="progress-sub">${actualizados} de ${conMod} con modificaciones</span></div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill chatbot" id="progFillChatbot" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="progress-segments">
+      <div class="progress-seg"><div class="progress-dot" style="background:#276221"></div>Con modificaciones: <strong>${conMod}</strong></div>
+      <div class="progress-seg"><div class="progress-dot" style="background:#856404"></div>Actualizados en chatbot: <strong>${actualizados}</strong></div>
+      <div class="progress-seg"><div class="progress-dot" style="background:#2a5e95"></div>Sin modificaciones: <strong>${sinMod}</strong></div>
+      <div class="progress-seg"><div class="progress-dot" style="background:#e5e7eb"></div>Sin respuesta: <strong>${sinResp}</strong></div>
+    </div>
+    ${cicloRows}
+  `;
+  requestAnimationFrame(()=>{
+    const f = document.getElementById('progFill');
+    if(f) f.style.width = pct+'%';
+    const fc = document.getElementById('progFillChatbot');
+    if(fc) fc.style.width = pctChatbot+'%';
+  });
+}
+
+function updateHeader(data) {
+  const ciclos = [...new Set(data.map(d=>d.ciclo))];
+  document.getElementById('headerBadge').textContent =
+    activeMes === 'Todos' ? `${new Set(allData.map(d=>d.hotel)).size} propiedades · ${getMeses().length-1} ciclo${getMeses().length-1!==1?'s':''}`
+                          : `${activeMes} · ${data.length} propiedades`;
+}
+
+function applyFilters() {
+  const data = getFiltered();
+  if(sortCol >= 0) {
+    const keys=[null,'hotel','contacto','ciclo','envio','respuesta','mod','desc','fechaChatbot','comentarios','estado'];
+    const k=keys[sortCol];
+    data.sort((a,b)=>sortAsc?(a[k]||'').localeCompare(b[k]||''):(b[k]||'').localeCompare(a[k]||''));
+  }
+  renderTable(data);
+}
+
+function sortTable(col) {
+  if(sortCol===col) sortAsc=!sortAsc; else {sortCol=col;sortAsc=true;}
+  applyFilters();
+}
+
+// Última fecha de actualización = respuesta de hotel más reciente en todo el consolidado
+function renderLastUpdate() {
+  const parse = s => {
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((s||'').trim());
+    return m ? new Date(+m[3], +m[2]-1, +m[1]) : null;
+  };
+  let best = null;
+  allData.forEach(d => {
+    const dt = parse(d.fechaChatbot);
+    if (dt && (!best || dt > best)) best = dt;
+  });
+  const el = document.getElementById('headerUpdatedDate');
+  if (el) el.textContent = best
+    ? best.toLocaleDateString('es-CO', {day:'2-digit', month:'2-digit', year:'numeric'})
+    : '—';
+}
+
+// Init
+renderMesTabs();
+applyFilters();
+renderLastUpdate();
+</script>
+</body>
+</html>
