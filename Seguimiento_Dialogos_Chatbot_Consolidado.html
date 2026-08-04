@@ -575,12 +575,10 @@ const allData = [
   {ciclo:"Jul-26",hotel:"GHL Relax Hotel Sunrise",contacto:"Juan Martinez",correo:"juan.martinez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
   {ciclo:"Jul-26",hotel:"GHL Style Barrancabermeja",contacto:"Luis Martinez",correo:"luis.martinez@ghlhoteles.com",envio:"02/07/2026",respuesta:"11/07/2026",mod:"No",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"Confirmó sin novedad para cambios",estado:"Sin modificaciones",mods:[]},
   {ciclo:"Jul-26",hotel:"GHL Style Bogotá Occidente",contacto:"Leidy Cely",correo:"jrecepcion.bogotaoccidente@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
-  {ciclo:"Jul-26",hotel:"GHL Style Neiva",contacto:"Carlos Robayo",correo:"yobani.robayo@ghlhoteles.com",envio:"02/07/2026",respuesta:"09/07/2026",mod:"Sí",desc:"5 diálogos modificados: ubicación, check-in/out tardío, horario y tarifa de desayuno",fechaChatbot:"30/07/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",mods:[
-      {dialogo:"9-01",nombre:"Ubicación",campo:"Dirección",antes:"⚠ No especificada en el diálogo previo",despues:"Cra. 16 #42-195, Comuna 2, Neiva, Huila, Colombia"},
+  {ciclo:"Jul-26",hotel:"GHL Style Neiva",contacto:"Carlos Robayo",correo:"yobani.robayo@ghlhoteles.com",envio:"02/07/2026",respuesta:"09/07/2026",mod:"Sí",desc:"3 diálogos modificados: ubicación, check-in/out tardío",fechaChatbot:"30/07/2026",actualizadoPor:"",comentarios:"Se retiran horario y tarifa de desayuno del listado: coinciden con el PDF de julio vigente, no eran cambios reales",estado:"Actualizado",mods:[
+      {dialogo:"19-01",nombre:"Location",campo:"Dirección",antes:"Cra. 8a #38-42, Comuna 2, Neiva, Huila, Colombia",despues:"Cra. 16 #42-195, Comuna 2, Neiva, Huila, Colombia"},
       {dialogo:"11-01",nombre:"Check-in time",campo:"Early check-in",antes:"Desde las 10:00, costo no especificado",despues:"Desde las 10:00, 150.000 COP por habitación, sujeto a disponibilidad"},
-      {dialogo:"11-11",nombre:"Check-out time",campo:"Check-out tardío",antes:"Hasta las 18:00, costo no especificado",despues:"Check-out regular hasta las 13:00; tardío hasta las 18:00 por 150.000 COP por habitación"},
-      {dialogo:"12-01",nombre:"Breakfast time",campo:"Horario desayuno",antes:"⚠ No especificado",despues:"Buffet diario de 6:30 a.m. a 10:00 a.m."},
-      {dialogo:"12-02",nombre:"Breakfast rates",campo:"Precio adulto",antes:"⚠ No especificado",despues:"40.000 COP por adulto; incluido en tarifa de habitación; visitantes también bienvenidos"}
+      {dialogo:"11-11",nombre:"Check-out time",campo:"Check-out tardío",antes:"Hasta las 18:00, costo no especificado",despues:"Check-out regular hasta las 13:00; tardío hasta las 18:00 por 150.000 COP por habitación"}
     ]},
   {ciclo:"Jul-26",hotel:"GHL Style Yopal",contacto:"Mafy Daniela Rodriguez",correo:"daniela.rodriguez@ghlhoteles.com",envio:"02/07/2026",respuesta:"08/07/2026",mod:"Sí",desc:"2 diálogos modificados: check-in y check-out anticipado/tardío (aclaración de impuestos)",fechaChatbot:"30/07/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",mods:[
       {dialogo:"11-01",nombre:"Check in time",campo:"Costo early check-in",antes:"70.000 COP por habitación",despues:"COP 70.000 + impuestos por habitación"},
@@ -623,16 +621,7 @@ const allData = [
       {dialogo:"19-03",nombre:"City center",campo:"Distancia al centro",antes:"26 m, 1 min caminando",despues:"4 km"},
       {dialogo:"20-21",nombre:"Celebration",campo:"Teléfono de eventos",antes:"+51 945 739 48",despues:"+51 945 739 484 (corrección de dígito faltante)"}
     ]},
-  {ciclo:"Jul-26",hotel:"Sonesta Bogotá",contacto:"Catalina Rojas",correo:"catalina.rojas@ghlhoteles.com",envio:"02/07/2026",respuesta:"12/07/2026",mod:"Sí",desc:"8 diálogos modificados: check-in/out, desayuno horario/precio, niños, mascotas, redes, restaurante",fechaChatbot:"30/07/2026",actualizadoPor:"",comentarios:"",estado:"Actualizado",mods:[
-      {dialogo:"—",nombre:"Check in time",campo:"Costo early check-in",antes:"Versión anterior",despues:"$35.000, sujeto a disponibilidad"},
-      {dialogo:"—",nombre:"Check out time",campo:"Late check-out",antes:"Versión anterior",despues:"$35.000 por hora; después de las 6:00 p.m. se cobra la tarifa completa"},
-      {dialogo:"—",nombre:"Breakfast time",campo:"Horario sábados, domingos y festivos",antes:"Versión anterior",despues:"6:30 a.m. a 10:30 a.m."},
-      {dialogo:"—",nombre:"Breakfast rates",campo:"Precio por persona",antes:"Versión anterior",despues:"$65.000 COP"},
-      {dialogo:"—",nombre:"Kids",campo:"Tarifa niños",antes:"Versión anterior",despues:"Menores de 12 años gratis con sus padres; mayores de 12 años $80.000 por noche"},
-      {dialogo:"—",nombre:"Pets",campo:"Peso permitido",antes:"Versión anterior",despues:"10 kg"},
-      {dialogo:"—",nombre:"Social & photoshoot",campo:"Correo de contacto",antes:"Versión anterior",despues:"cateryne.palacios@ghlhoteles.com"},
-      {dialogo:"—",nombre:"Restaurant Cook's Restaurante",campo:"Horario de apertura",antes:"Versión anterior",despues:"6:00 a.m. a 12:00 p.m."}
-    ]},
+  {ciclo:"Jul-26",hotel:"Sonesta Bogotá",contacto:"Catalina Rojas",correo:"catalina.rojas@ghlhoteles.com",envio:"02/07/2026",respuesta:"12/07/2026",mod:"No",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"Los 8 puntos que reportó ya coinciden con el PDF de julio vigente (check-in, check-out, desayuno, niños, mascotas, redes, restaurante) — no eran cambios reales, solo confirmó valores ya correctos",estado:"Sin modificaciones",mods:[]},
   {ciclo:"Jul-26",hotel:"Sonesta Ibagué",contacto:"Wilmer Rodriguez",correo:"wilmer.rodriguez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
   {ciclo:"Jul-26",hotel:"Sonesta Loja",contacto:"Miryam Ramirez",correo:"miryam.ramirez@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
   {ciclo:"Jul-26",hotel:"Sonesta Osorno",contacto:"Cristina Sanzana",correo:"cristina.sanzana@ghlhoteles.com",envio:"02/07/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
