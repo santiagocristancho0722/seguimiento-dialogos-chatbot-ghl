@@ -124,10 +124,13 @@
   @media(max-width:600px){.kpi-row{grid-template-columns:1fr 1fr;}.controls{flex-direction:column;}}
 
   /* ── Dashboard general (pestaña Todos) ── */
-  .dash-grid{display:none;grid-template-columns:repeat(4,1fr);gap:14px;padding:18px 32px 4px;}
+  .dash-section-title{padding:22px 32px 0;font-size:13px;font-weight:700;color:var(--navy);display:none;}
+  .dash-section-title.show{display:block;}
+  .dash-grid{display:none;grid-template-columns:repeat(3,1fr);gap:14px;padding:10px 32px 4px;}
   .dash-grid.show{display:grid;}
   .dash-card{background:var(--white);border-radius:10px;padding:16px 18px 14px;box-shadow:0 1px 4px rgba(0,0,0,.06);border-top:3px solid var(--navy);}
-  .dash-card h3{font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px;}
+  .dash-card h3{font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+  .dash-desc{font-size:10.5px;color:var(--gray);line-height:1.4;margin:0 0 12px;}
   .dash-card svg{display:block;width:100%;height:auto;overflow:visible;}
   .dash-bar-val{font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;}
   .dash-bar-cat{font-size:9px;fill:var(--gray);}
@@ -138,6 +141,9 @@
   .dash-empty{font-size:11px;color:var(--gray);text-align:center;padding:20px 0;}
   @media(max-width:1100px){.dash-grid{grid-template-columns:repeat(2,1fr);}}
   @media(max-width:600px){.dash-grid{grid-template-columns:1fr;}}
+
+  /* ── Tabla detallada (oculta en "Todos", visible por ciclo) ── */
+  .table-section.hidden{display:none;}
 </style>
 </head>
 <body>
@@ -159,60 +165,63 @@
 <!-- Mes tabs -->
 <div class="mes-bar" id="mesBar"></div>
 
-<!-- Dashboard general (solo pestaña Todos) -->
-<div class="dash-grid" id="dashGrid"></div>
-
 <!-- KPIs -->
 <div class="kpi-row" id="kpiRow"></div>
 
 <!-- Progress bar -->
 <div class="progress-wrap" id="progressWrap"></div>
 
-<!-- Controls -->
-<div class="controls">
-  <input type="text" id="searchInput" placeholder="Buscar hotel, contacto o descripción…" oninput="applyFilters()">
-  <select id="filterMod" onchange="applyFilters()">
-    <option value="">Todas — Modificaciones</option>
-    <option value="Sí">Con modificaciones</option>
-    <option value="No">Sin modificaciones</option>
-    <option value="—">Sin respuesta</option>
-  </select>
-  <select id="filterStatus" onchange="applyFilters()">
-    <option value="">Todos — Estado</option>
-    <option value="Actualizado">Actualizado</option>
-    <option value="Pendiente actualización">Pendiente actualización</option>
-    <option value="Sin respuesta">Sin respuesta</option>
-    <option value="Sin modificaciones">Sin modificaciones</option>
-  </select>
-  <span class="count-label" id="countLabel"></span>
-</div>
+<!-- Dashboard general (solo pestaña Todos) -->
+<div class="dash-section-title" id="dashSectionTitle">📊 Panel general — métricas clave de todos los ciclos</div>
+<div class="dash-grid" id="dashGrid"></div>
 
-<div class="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:#c6efce;border:1px solid #276221"></div>Actualizado</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#fff3cd;border:1px solid #856404"></div>Pendiente actualización</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#ffc7ce;border:1px solid #9c0006"></div>Sin respuesta</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#dce9f5;border:1px solid #1f4e79"></div>Sin modificaciones</div>
-</div>
+<!-- Tabla detallada (oculta en "Todos", visible por ciclo) -->
+<div class="table-section" id="tableSection">
+  <div class="controls">
+    <input type="text" id="searchInput" placeholder="Buscar hotel, contacto o descripción…" oninput="applyFilters()">
+    <select id="filterMod" onchange="applyFilters()">
+      <option value="">Todas — Modificaciones</option>
+      <option value="Sí">Con modificaciones</option>
+      <option value="No">Sin modificaciones</option>
+      <option value="—">Sin respuesta</option>
+    </select>
+    <select id="filterStatus" onchange="applyFilters()">
+      <option value="">Todos — Estado</option>
+      <option value="Actualizado">Actualizado</option>
+      <option value="Pendiente actualización">Pendiente actualización</option>
+      <option value="Sin respuesta">Sin respuesta</option>
+      <option value="Sin modificaciones">Sin modificaciones</option>
+    </select>
+    <span class="count-label" id="countLabel"></span>
+  </div>
 
-<div class="table-wrap">
-<table id="mainTable">
-  <thead>
-    <tr>
-      <th></th>
-      <th onclick="sortTable(1)">Hotel <span class="si">⇅</span></th>
-      <th onclick="sortTable(2)">Contacto <span class="si">⇅</span></th>
-      <th onclick="sortTable(3)">Ciclo <span class="si">⇅</span></th>
-      <th onclick="sortTable(4)">Fecha envío <span class="si">⇅</span></th>
-      <th onclick="sortTable(5)">Fecha respuesta <span class="si">⇅</span></th>
-      <th onclick="sortTable(6)">¿Modificaciones? <span class="si">⇅</span></th>
-      <th>Descripción de modificaciones</th>
-      <th onclick="sortTable(8)">Fecha actualiz. chatbot <span class="si">⇅</span></th>
-      <th>Comentarios</th>
-      <th onclick="sortTable(10)">Estado <span class="si">⇅</span></th>
-    </tr>
-  </thead>
-  <tbody id="tableBody"></tbody>
-</table>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#c6efce;border:1px solid #276221"></div>Actualizado</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fff3cd;border:1px solid #856404"></div>Pendiente actualización</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ffc7ce;border:1px solid #9c0006"></div>Sin respuesta</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#dce9f5;border:1px solid #1f4e79"></div>Sin modificaciones</div>
+  </div>
+
+  <div class="table-wrap">
+  <table id="mainTable">
+    <thead>
+      <tr>
+        <th></th>
+        <th onclick="sortTable(1)">Hotel <span class="si">⇅</span></th>
+        <th onclick="sortTable(2)">Contacto <span class="si">⇅</span></th>
+        <th onclick="sortTable(3)">Ciclo <span class="si">⇅</span></th>
+        <th onclick="sortTable(4)">Fecha envío <span class="si">⇅</span></th>
+        <th onclick="sortTable(5)">Fecha respuesta <span class="si">⇅</span></th>
+        <th onclick="sortTable(6)">¿Modificaciones? <span class="si">⇅</span></th>
+        <th>Descripción de modificaciones</th>
+        <th onclick="sortTable(8)">Fecha actualiz. chatbot <span class="si">⇅</span></th>
+        <th>Comentarios</th>
+        <th onclick="sortTable(10)">Estado <span class="si">⇅</span></th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+  </div>
 </div>
 
 <script>
@@ -856,6 +865,7 @@ function setMes(mes) {
   renderMesTabs();
   applyFilters();
   renderDashboard();
+  document.getElementById('tableSection').classList.toggle('hidden', activeMes === 'Todos');
 }
 
 function statusBadge(s) {
@@ -1099,10 +1109,48 @@ function chartTopHoteles(limit) {
   return `<svg viewBox="0 0 ${W} ${H+2}">${rows}</svg>`;
 }
 
+function chartChatbotPorCiclo(ciclos, stats) {
+  const W=260, H=110, barW=40, gap=(W-ciclos.length*barW)/(ciclos.length+1);
+  let bars='';
+  ciclos.forEach((c,i)=>{
+    const s = stats[c];
+    const conMod = s.actualizado + s.pendiente;
+    const pct = conMod ? Math.round(s.actualizado/conMod*100) : 0;
+    const x = gap + i*(barW+gap);
+    const h = (pct/100)*(H-38);
+    const y = (H-22)-h;
+    bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(h,2).toFixed(1)}" rx="3" fill="#276221"><title>${c}: ${pct}% actualizado en el chatbot (${s.actualizado} de ${conMod} con modificaciones)</title></rect>`;
+    bars += `<text x="${x+barW/2}" y="${(y-6).toFixed(1)}" text-anchor="middle" class="dash-bar-val" fill="#276221">${pct}%</text>`;
+    bars += `<text x="${x+barW/2}" y="${H+14}" text-anchor="middle" class="dash-bar-cat">${c}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H+22}">${bars}</svg>`;
+}
+
+function chartSinRespuestaRecurrente(limit) {
+  const counts = {};
+  allData.forEach(d=>{ if(!d.respuesta) counts[d.hotel] = (counts[d.hotel]||0) + 1; });
+  const top = Object.entries(counts).filter(([,v])=>v>=2).sort((a,b)=>b[1]-a[1]).slice(0,limit);
+  if(!top.length) return '<div class="dash-empty">Ningún hotel acumula falta de respuesta en más de un ciclo. ✅</div>';
+  const maxV = top[0][1];
+  const rowH = 20, barX = 122, barMaxW = 110, W = 280, H = top.length*rowH;
+  let rows = '';
+  top.forEach(([hotel,v],i)=>{
+    const y = i*rowH;
+    const w = Math.max((v/maxV)*barMaxW, 3);
+    const short = hotel.length>20 ? hotel.slice(0,19)+'…' : hotel;
+    rows += `<text x="0" y="${y+13}" font-size="9" font-weight="600" fill="#023859">${short}</text>`;
+    rows += `<rect x="${barX}" y="${y+3}" width="${w.toFixed(1)}" height="13" rx="2" fill="#9c0006"><title>${hotel}: sin respuesta en ${v} ciclos</title></rect>`;
+    rows += `<text x="${barX+w+5}" y="${y+13}" font-size="9" font-weight="700" fill="#9c0006">${v}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H+2}">${rows}</svg>`;
+}
+
 function renderDashboard() {
   const el = document.getElementById('dashGrid');
-  if(activeMes !== 'Todos') { el.classList.remove('show'); el.innerHTML = ''; return; }
+  const title = document.getElementById('dashSectionTitle');
+  if(activeMes !== 'Todos') { el.classList.remove('show'); el.innerHTML = ''; title.classList.remove('show'); return; }
   el.classList.add('show');
+  title.classList.add('show');
   const ciclos = ordenarCiclos([...new Set(allData.map(d=>d.ciclo))]);
   const cicloStats = {};
   ciclos.forEach(c=>{
@@ -1119,6 +1167,7 @@ function renderDashboard() {
   el.innerHTML = `
     <div class="dash-card">
       <h3>Estado de hoteles por ciclo</h3>
+      <p class="dash-desc">Cuántas de las 42 propiedades quedaron en cada estado (actualizado, pendiente, sin modificaciones o sin respuesta) en cada ciclo mensual.</p>
       ${chartEstadoPorCiclo(ciclos, cicloStats)}
       <div class="dash-legend">
         <div class="dash-legend-item"><div class="dash-legend-dot" style="background:#276221"></div>Actualizado</div>
@@ -1129,15 +1178,28 @@ function renderDashboard() {
     </div>
     <div class="dash-card">
       <h3>% Cumplimiento por ciclo</h3>
+      <p class="dash-desc">Porcentaje de hoteles que respondieron el correo de revisión en cada ciclo, sin importar si reportaron cambios o no.</p>
       ${chartPctPorCiclo(ciclos, cicloStats)}
     </div>
     <div class="dash-card">
+      <h3>% Actualizado en chatbot por ciclo</h3>
+      <p class="dash-desc">De los hoteles que reportaron cambios en ese ciclo, qué porcentaje ya quedó reflejado en el chatbot.</p>
+      ${chartChatbotPorCiclo(ciclos, cicloStats)}
+    </div>
+    <div class="dash-card">
       <h3>Diálogos modificados por ciclo</h3>
+      <p class="dash-desc">Número total de diálogos del chatbot que tuvieron algún cambio reportado en cada ciclo.</p>
       ${chartDialogosPorCiclo(ciclos, cicloStats)}
     </div>
     <div class="dash-card">
       <h3>Top hoteles — diálogos modificados (acum.)</h3>
+      <p class="dash-desc">Los hoteles que acumulan más diálogos modificados desde que inició el seguimiento, sumando todos los ciclos.</p>
       ${chartTopHoteles(8)}
+    </div>
+    <div class="dash-card">
+      <h3>Hoteles sin respuesta recurrente</h3>
+      <p class="dash-desc">Hoteles que han dejado de responder el correo de revisión en 2 o más ciclos — requieren seguimiento prioritario.</p>
+      ${chartSinRespuestaRecurrente(10)}
     </div>
   `;
 }
@@ -1186,6 +1248,7 @@ renderMesTabs();
 applyFilters();
 renderLastUpdate();
 renderDashboard();
+document.getElementById('tableSection').classList.toggle('hidden', activeMes === 'Todos');
 </script>
 </body>
 </html>
