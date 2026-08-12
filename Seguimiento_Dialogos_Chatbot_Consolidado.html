@@ -122,6 +122,22 @@
 
   @media(max-width:900px){.kpi-row{grid-template-columns:repeat(3,1fr);}}
   @media(max-width:600px){.kpi-row{grid-template-columns:1fr 1fr;}.controls{flex-direction:column;}}
+
+  /* ── Dashboard general (pestaña Todos) ── */
+  .dash-grid{display:none;grid-template-columns:repeat(4,1fr);gap:14px;padding:18px 32px 4px;}
+  .dash-grid.show{display:grid;}
+  .dash-card{background:var(--white);border-radius:10px;padding:16px 18px 14px;box-shadow:0 1px 4px rgba(0,0,0,.06);border-top:3px solid var(--navy);}
+  .dash-card h3{font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px;}
+  .dash-card svg{display:block;width:100%;height:auto;overflow:visible;}
+  .dash-bar-val{font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .dash-bar-cat{font-size:9px;fill:var(--gray);}
+  .dash-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;}
+  .dash-legend-item{display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--gray);}
+  .dash-legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+  .dash-hbar-row{display:grid;grid-template-columns:1fr;gap:2px;}
+  .dash-empty{font-size:11px;color:var(--gray);text-align:center;padding:20px 0;}
+  @media(max-width:1100px){.dash-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:600px){.dash-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -142,6 +158,9 @@
 
 <!-- Mes tabs -->
 <div class="mes-bar" id="mesBar"></div>
+
+<!-- Dashboard general (solo pestaña Todos) -->
+<div class="dash-grid" id="dashGrid"></div>
 
 <!-- KPIs -->
 <div class="kpi-row" id="kpiRow"></div>
@@ -836,6 +855,7 @@ function setMes(mes) {
   activeMes = mes;
   renderMesTabs();
   applyFilters();
+  renderDashboard();
 }
 
 function statusBadge(s) {
@@ -997,6 +1017,131 @@ function renderProgress(data) {
   });
 }
 
+const MESES_ORDEN = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+function ordenarCiclos(ciclos) {
+  return [...ciclos].sort((a,b)=>{
+    const [ma,ya]=a.split('-'), [mb,yb]=b.split('-');
+    return ((+ya)*12+MESES_ORDEN.indexOf(ma)) - ((+yb)*12+MESES_ORDEN.indexOf(mb));
+  });
+}
+
+function chartEstadoPorCiclo(ciclos, stats) {
+  const W=260, H=140, barW=40, gap=(W-ciclos.length*barW)/(ciclos.length+1);
+  let bars='';
+  ciclos.forEach((c,i)=>{
+    const s = stats[c];
+    const total = s.total || 1;
+    const x = gap + i*(barW+gap);
+    const segs = [['Actualizado',s.actualizado,'#276221'],['Pendiente',s.pendiente,'#856404'],['Sin modificaciones',s.sinMod,'#1f4e79'],['Sin respuesta',s.sinResp,'#9c0006']];
+    let y = H;
+    segs.forEach(([label,v,color])=>{
+      const h = (v/total)*H;
+      if(v>0){
+        y -= h;
+        bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(h-1.5,0).toFixed(1)}" rx="2" fill="${color}"><title>${c} — ${label}: ${v}</title></rect>`;
+      }
+    });
+    bars += `<text x="${x+barW/2}" y="${H+14}" text-anchor="middle" class="dash-bar-cat">${c}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H+22}">${bars}</svg>`;
+}
+
+function chartPctPorCiclo(ciclos, stats) {
+  const W=260, H=110, barW=40, gap=(W-ciclos.length*barW)/(ciclos.length+1);
+  let bars='';
+  ciclos.forEach((c,i)=>{
+    const s = stats[c];
+    const pct = s.total ? Math.round((s.total-s.sinResp)/s.total*100) : 0;
+    const x = gap + i*(barW+gap);
+    const h = (pct/100)*(H-38);
+    const y = (H-22)-h;
+    const [fg] = CICLO_PALETTE[i % CICLO_PALETTE.length];
+    bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(h,2).toFixed(1)}" rx="3" fill="${fg}"><title>${c}: ${pct}% de cumplimiento</title></rect>`;
+    bars += `<text x="${x+barW/2}" y="${(y-6).toFixed(1)}" text-anchor="middle" class="dash-bar-val" fill="${fg}">${pct}%</text>`;
+    bars += `<text x="${x+barW/2}" y="${H+14}" text-anchor="middle" class="dash-bar-cat">${c}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H+22}">${bars}</svg>`;
+}
+
+function chartDialogosPorCiclo(ciclos, stats) {
+  const W=260, H=110, barW=40, gap=(W-ciclos.length*barW)/(ciclos.length+1);
+  const maxV = Math.max(1, ...ciclos.map(c=>stats[c].totalDialogos));
+  let bars='';
+  ciclos.forEach((c,i)=>{
+    const s = stats[c];
+    const v = s.totalDialogos;
+    const x = gap + i*(barW+gap);
+    const h = (v/maxV)*(H-38);
+    const y = (H-22)-h;
+    bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(h,2).toFixed(1)}" rx="3" fill="#2a5e95"><title>${c}: ${v} diálogos modificados</title></rect>`;
+    bars += `<text x="${x+barW/2}" y="${(y-6).toFixed(1)}" text-anchor="middle" class="dash-bar-val" fill="#023859">${v}</text>`;
+    bars += `<text x="${x+barW/2}" y="${H+14}" text-anchor="middle" class="dash-bar-cat">${c}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H+22}">${bars}</svg>`;
+}
+
+function chartTopHoteles(limit) {
+  const counts = {};
+  allData.forEach(d=>{ if(d.mods && d.mods.length) counts[d.hotel] = (counts[d.hotel]||0) + d.mods.length; });
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,limit);
+  if(!top.length) return '<div class="dash-empty">Sin diálogos modificados registrados.</div>';
+  const maxV = top[0][1];
+  const rowH = 20, labelW = 116, barX = 122, barMaxW = 110, W = 280, H = top.length*rowH;
+  let rows = '';
+  top.forEach(([hotel,v],i)=>{
+    const y = i*rowH;
+    const w = Math.max((v/maxV)*barMaxW, 3);
+    const short = hotel.length>20 ? hotel.slice(0,19)+'…' : hotel;
+    rows += `<text x="0" y="${y+13}" font-size="9" font-weight="600" fill="#023859">${short}</text>`;
+    rows += `<rect x="${barX}" y="${y+3}" width="${w.toFixed(1)}" height="13" rx="2" fill="#6399ba"><title>${hotel}: ${v} diálogos</title></rect>`;
+    rows += `<text x="${barX+w+5}" y="${y+13}" font-size="9" font-weight="700" fill="#023859">${v}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H+2}">${rows}</svg>`;
+}
+
+function renderDashboard() {
+  const el = document.getElementById('dashGrid');
+  if(activeMes !== 'Todos') { el.classList.remove('show'); el.innerHTML = ''; return; }
+  el.classList.add('show');
+  const ciclos = ordenarCiclos([...new Set(allData.map(d=>d.ciclo))]);
+  const cicloStats = {};
+  ciclos.forEach(c=>{
+    const rows = allData.filter(d=>d.ciclo===c);
+    cicloStats[c] = {
+      total: rows.length,
+      actualizado: rows.filter(d=>d.estado==='Actualizado').length,
+      pendiente: rows.filter(d=>d.estado==='Pendiente actualización').length,
+      sinMod: rows.filter(d=>d.estado==='Sin modificaciones').length,
+      sinResp: rows.filter(d=>d.estado==='Sin respuesta').length,
+      totalDialogos: rows.reduce((s,d)=>s+(d.mods?d.mods.length:0),0),
+    };
+  });
+  el.innerHTML = `
+    <div class="dash-card">
+      <h3>Estado de hoteles por ciclo</h3>
+      ${chartEstadoPorCiclo(ciclos, cicloStats)}
+      <div class="dash-legend">
+        <div class="dash-legend-item"><div class="dash-legend-dot" style="background:#276221"></div>Actualizado</div>
+        <div class="dash-legend-item"><div class="dash-legend-dot" style="background:#856404"></div>Pendiente</div>
+        <div class="dash-legend-item"><div class="dash-legend-dot" style="background:#1f4e79"></div>Sin modif.</div>
+        <div class="dash-legend-item"><div class="dash-legend-dot" style="background:#9c0006"></div>Sin respuesta</div>
+      </div>
+    </div>
+    <div class="dash-card">
+      <h3>% Cumplimiento por ciclo</h3>
+      ${chartPctPorCiclo(ciclos, cicloStats)}
+    </div>
+    <div class="dash-card">
+      <h3>Diálogos modificados por ciclo</h3>
+      ${chartDialogosPorCiclo(ciclos, cicloStats)}
+    </div>
+    <div class="dash-card">
+      <h3>Top hoteles — diálogos modificados (acum.)</h3>
+      ${chartTopHoteles(8)}
+    </div>
+  `;
+}
+
 function updateHeader(data) {
   const ciclos = [...new Set(data.map(d=>d.ciclo))];
   document.getElementById('headerBadge').textContent =
@@ -1040,6 +1185,7 @@ function renderLastUpdate() {
 renderMesTabs();
 applyFilters();
 renderLastUpdate();
+renderDashboard();
 </script>
 </body>
 </html>
