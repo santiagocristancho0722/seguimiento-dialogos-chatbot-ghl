@@ -145,8 +145,21 @@
   .dash-subtab:hover{background:#dbe4ee;}
   .dash-subtab.active:hover{background:var(--navy);}
   .dash-action{font-size:11.5px;color:#023859;background:#eef4fa;border-radius:6px;padding:7px 9px;margin-top:10px;line-height:1.4;}
-  @media(max-width:1100px){.dash-grid{grid-template-columns:repeat(2,1fr);}}
-  @media(max-width:600px){.dash-grid{grid-template-columns:1fr;}}
+  .dash-card-span2{grid-column:span 2;}
+  .dash-card-wide{grid-column:1/-1;}
+  .dash-list{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;}
+  .dash-list-row{border-left:3px solid var(--navy);padding:5px 10px;background:#f7f9fb;border-radius:0 6px 6px 0;}
+  .dash-list-main{font-size:12px;color:var(--navy);}
+  .dash-list-badge{display:inline-block;font-size:10.5px;font-weight:700;background:#eef2f6;color:var(--gray);border-radius:99px;padding:1px 8px;margin-left:7px;}
+  .dash-list-sub{font-size:11.5px;color:var(--gray);margin-top:3px;}
+  .heat-wrap{max-height:520px;overflow-y:auto;border:1px solid #eef2f6;border-radius:6px;padding:8px 10px;}
+  .heat-row{display:grid;align-items:center;gap:5px;padding:1.5px 0;}
+  .heat-row.heat-head{padding-bottom:5px;margin-bottom:4px;border-bottom:1px solid #eef2f6;}
+  .heat-label{font-size:11px;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .heat-cell{height:15px;border-radius:3px;}
+  .heat-cell-head{font-size:10.5px;font-weight:700;color:var(--gray);text-align:center;}
+  @media(max-width:1100px){.dash-grid{grid-template-columns:repeat(2,1fr);}.dash-card-span2{grid-column:span 2;}}
+  @media(max-width:600px){.dash-grid{grid-template-columns:1fr;}.dash-card-span2{grid-column:1;}}
 
   /* ── Tabla detallada (oculta en "Todos", visible por ciclo) ── */
   .table-section.hidden{display:none;}
@@ -1162,11 +1175,98 @@ function chartSinRespuestaRecurrente(limit) {
     (hotel,v)=>`${hotel}: sin respuesta en ${v} ciclos`);
 }
 
+function cicloSortKey(c) {
+  const [m,y] = c.split('-');
+  return (+y)*12 + MESES_ORDEN.indexOf(m);
+}
+
+// Detecta cambios de persona de contacto de un mismo hotel entre ciclos consecutivos
+function listCambiosContacto(limit) {
+  const byHotel = {};
+  allData.forEach(d=>{ (byHotel[d.hotel] = byHotel[d.hotel]||[]).push(d); });
+  const changes = [];
+  Object.entries(byHotel).forEach(([hotel, rows])=>{
+    const sorted = [...rows].sort((a,b)=>cicloSortKey(a.ciclo)-cicloSortKey(b.ciclo));
+    for(let i=1;i<sorted.length;i++){
+      const prev = (sorted[i-1].contacto||'').trim();
+      const cur = (sorted[i].contacto||'').trim();
+      if(prev && cur && prev!=='—' && cur!=='—' && prev.toLowerCase()!==cur.toLowerCase()){
+        changes.push({hotel, ciclo:sorted[i].ciclo, antes:prev, despues:cur});
+      }
+    }
+  });
+  if(!changes.length) return '<div class="dash-empty">Sin cambios de contacto registrados entre ciclos. ✅</div>';
+  const rows = changes.slice(0,limit).map(c=>`
+    <div class="dash-list-row">
+      <div class="dash-list-main"><strong>${c.hotel}</strong><span class="dash-list-badge">${c.ciclo}</span></div>
+      <div class="dash-list-sub">${c.antes} → ${c.despues}</div>
+    </div>`).join('');
+  return `<div class="dash-list">${rows}</div>`;
+}
+
+// Agrupa el texto de "campo" en categorías amplias (Precio, Horario, Contacto, etc.)
+function campoCategoria(campo) {
+  if(!campo || campo==='—') return null;
+  const c = campo.toLowerCase();
+  if(/precio|tarifa|costo|descuento|dep[oó]sito|cop\b|usd\b/.test(c)) return 'Precio / tarifas';
+  if(/horario|hora\b/.test(c)) return 'Horario';
+  if(/tel[eé]fono|whatsapp|celular|correo|email|contacto/.test(c)) return 'Contacto (teléfono/correo)';
+  if(/desayuno|restaurante|room service|bar\b|brunch|men[uú]/.test(c)) return 'Desayuno / restaurante';
+  if(/mascota|pet\b/.test(c)) return 'Mascotas';
+  if(/pol[ií]tica|restricci[oó]n|requisito/.test(c)) return 'Política / restricciones';
+  if(/direcci[oó]n|ubicaci[oó]n/.test(c)) return 'Ubicación';
+  if(/disponibilidad|reserva/.test(c)) return 'Disponibilidad / reservas';
+  if(/habitaci[oó]n|cama|balc[oó]n|vista|piso|ba[ñn]o|amenidad/.test(c)) return 'Habitaciones';
+  return 'Otro';
+}
+
+function chartTopCampos(limit, scope) {
+  const counts = {};
+  allData.forEach(d=>{
+    if(scope!=='Todos' && d.ciclo!==scope) return;
+    (d.mods||[]).forEach(m=>{
+      const cat = campoCategoria(m.campo);
+      if(cat) counts[cat] = (counts[cat]||0) + 1;
+    });
+  });
+  return hbarChart(Object.entries(counts), limit, '#4C1D95',
+    'Sin datos de diálogos para este ciclo.',
+    (cat,v)=>`${cat}: ${v} cambios`);
+}
+
+// Mapa de calor Hotel × Ciclo — estado de cada propiedad en cada ciclo
+function heatmapHotelCiclo(ciclos) {
+  const hotels = [...new Set(allData.map(d=>d.hotel))].sort((a,b)=>a.localeCompare(b));
+  const lookup = {};
+  allData.forEach(d=>{ lookup[d.hotel+'|'+d.ciclo] = d.estado; });
+  const colorFor = estado => ({
+    'Actualizado':'#276221','Pendiente actualización':'#856404',
+    'Sin modificaciones':'#1f4e79','Sin respuesta':'#9c0006'
+  }[estado] || '#e5e7eb');
+  const cols = `170px repeat(${ciclos.length}, 1fr)`;
+  const header = `<div class="heat-row heat-head" style="grid-template-columns:${cols}">
+    <div class="heat-label"></div>
+    ${ciclos.map(c=>`<div class="heat-cell-head">${c}</div>`).join('')}
+  </div>`;
+  const rows = hotels.map(h=>{
+    const cells = ciclos.map(c=>{
+      const estado = lookup[h+'|'+c];
+      const color = estado ? colorFor(estado) : '#f3f4f6';
+      const title = estado ? `${h} — ${c}: ${estado}` : `${h} — ${c}: sin datos`;
+      return `<div class="heat-cell" style="background:${color}" title="${title}"></div>`;
+    }).join('');
+    return `<div class="heat-row" style="grid-template-columns:${cols}"><div class="heat-label" title="${h}">${h}</div>${cells}</div>`;
+  }).join('');
+  return `<div class="heat-wrap">${header}${rows}</div>`;
+}
+
 // Estado de las sub-pestañas "Acumulado / por ciclo" de los rankings
 let scopeHoteles = 'Todos';
 let scopeTemas = 'Todos';
+let scopeCampos = 'Todos';
 function setScopeHoteles(v){ scopeHoteles = v; renderDashboard(); }
 function setScopeTemas(v){ scopeTemas = v; renderDashboard(); }
+function setScopeCampos(v){ scopeCampos = v; renderDashboard(); }
 function subtabsHTML(current, ciclos, fnName) {
   const opts = ['Todos', ...ciclos];
   return `<div class="dash-subtabs">${opts.map(o=>
@@ -1249,10 +1349,35 @@ function renderDashboard() {
       <div class="dash-action">📌 Si una temática se repite en muchos hoteles, revisar si su plantilla base necesita ajustarse.</div>
     </div>
     <div class="dash-card">
+      <h3>Top campos modificados</h3>
+      <p class="dash-desc">Qué tipo de dato cambia más (precio, horario, contacto, política...). Usa las pestañas para ver por ciclo.</p>
+      ${subtabsHTML(scopeCampos, ciclos, 'setScopeCampos')}
+      ${chartTopCampos(9, scopeCampos)}
+      <div class="dash-action">📌 Si "Precio / tarifas" domina el ranking, considerar verificarlo con mayor frecuencia entre ciclos.</div>
+    </div>
+    <div class="dash-card">
       <h3>Hoteles sin respuesta recurrente</h3>
       <p class="dash-desc">Hoteles que llevan 2 o más ciclos sin responder el correo de revisión.</p>
       ${chartSinRespuestaRecurrente(8)}
       <div class="dash-action">📌 Acción: escalar contacto (llamada o WhatsApp) con estos hoteles antes del cierre del próximo ciclo.</div>
+    </div>
+    <div class="dash-card dash-card-span2">
+      <h3>Cambios de contacto entre ciclos</h3>
+      <p class="dash-desc">Hoteles donde la persona de contacto cambió de un ciclo a otro — posible señal de rotación de personal.</p>
+      ${listCambiosContacto(10)}
+      <div class="dash-action">📌 Confirmar que el nuevo contacto tenga la información completa del hotel antes del próximo envío.</div>
+    </div>
+    <div class="dash-card dash-card-wide">
+      <h3>Mapa de calor — Hotel × Ciclo</h3>
+      <p class="dash-desc">Estado de cada propiedad en cada ciclo, para detectar de un vistazo quién mejora o empeora con el tiempo.</p>
+      ${heatmapHotelCiclo(ciclos)}
+      <div class="dash-legend">
+        <div class="dash-legend-item"><div class="dash-legend-dot" style="background:#276221"></div>Actualizado</div>
+        <div class="dash-legend-item"><div class="dash-legend-dot" style="background:#856404"></div>Pendiente</div>
+        <div class="dash-legend-item"><div class="dash-legend-dot" style="background:#1f4e79"></div>Sin modif.</div>
+        <div class="dash-legend-item"><div class="dash-legend-dot" style="background:#9c0006"></div>Sin respuesta</div>
+      </div>
+      <div class="dash-action">📌 Los hoteles con varias celdas rojas o amarillas seguidas necesitan seguimiento estructural, no solo puntual.</div>
     </div>
   `;
 }
