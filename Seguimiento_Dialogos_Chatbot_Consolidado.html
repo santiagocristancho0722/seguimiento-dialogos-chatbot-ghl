@@ -1077,8 +1077,8 @@ function chartPctPorCiclo(ciclos, stats, colorMap) {
     const s = stats[c];
     const pct = s.total ? Math.round((s.total-s.sinResp)/s.total*100) : 0;
     const x = gap + i*(barW+gap);
-    const h = (pct/100)*(H-38);
-    const y = (H-22)-h;
+    const h = (pct/100)*(H-20);
+    const y = H-h;
     const fg = colorMap[c];
     bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(h,2).toFixed(1)}" rx="3" fill="${fg}"><title>${c}: ${pct}% de cumplimiento</title></rect>`;
     bars += `<text x="${x+barW/2}" y="${(y-6).toFixed(1)}" text-anchor="middle" class="dash-bar-val" fill="${fg}">${pct}%</text>`;
@@ -1095,8 +1095,8 @@ function chartDialogosPorCiclo(ciclos, stats, colorMap) {
     const s = stats[c];
     const v = s.totalDialogos;
     const x = gap + i*(barW+gap);
-    const h = (v/maxV)*(H-38);
-    const y = (H-22)-h;
+    const h = (v/maxV)*(H-20);
+    const y = H-h;
     const fg = colorMap[c];
     bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(h,2).toFixed(1)}" rx="3" fill="${fg}"><title>${c}: ${v} diálogos modificados</title></rect>`;
     bars += `<text x="${x+barW/2}" y="${(y-6).toFixed(1)}" text-anchor="middle" class="dash-bar-val" fill="${fg}">${v}</text>`;
