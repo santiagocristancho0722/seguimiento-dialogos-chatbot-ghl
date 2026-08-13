@@ -775,7 +775,7 @@ const allData = [
     ]},
   {ciclo:"Ago-26",hotel:"LATAM XELA",contacto:"Gabriela Rodas",correo:"gabriela.rodas@ghlhoteles.com",envio:"02/08/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
   {ciclo:"Ago-26",hotel:"Makani Luxury Wanderlust",contacto:"Jose Macea",correo:"jose.macea@ghlhoteles.com",envio:"02/08/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
-  {ciclo:"Ago-26",hotel:"Park Lake Luxury",contacto:"—",correo:"reservas.parklake@ghlhoteles.com",envio:"02/08/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
+  {ciclo:"Ago-26",hotel:"Park Lake Luxury",contacto:"Sergio Víctor Alejandro Yevenes Escobar",correo:"sergio.yevenes@ghlhoteles.com",envio:"02/08/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"Nuevo contacto: Jefe de Recepción. Antes solo se tenía el correo genérico reservas.parklake@ghlhoteles.com, sin nombre de contacto.",estado:"Sin respuesta",mods:[]},
   {ciclo:"Ago-26",hotel:"San Lazaro Art",contacto:"Keilis Mercado",correo:"keilis.mercado@ghlhoteles.com",envio:"02/08/2026",respuesta:"",mod:"—",desc:"",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Sin respuesta",mods:[]},
   {ciclo:"Ago-26",hotel:"Sonesta Bucaramanga",contacto:"Jeferson Reyes",correo:"jeferson.reyes@ghlhoteles.com",envio:"02/08/2026",respuesta:"05/08/2026",mod:"Sí",desc:"4 diálogos modificados: Room service, Bar, Rooftop, Restaurant",fechaChatbot:"",actualizadoPor:"",comentarios:"",estado:"Pendiente actualización",mods:[
       {dialogo:"13-06",nombre:"Room service",campo:"Horario",antes:"Disponible 24/7",despues:"06:00 a 22:00, jornada continua"},
@@ -1190,8 +1190,9 @@ function listCambiosContacto(limit) {
     for(let i=1;i<sorted.length;i++){
       const prev = (sorted[i-1].contacto||'').trim();
       const cur = (sorted[i].contacto||'').trim();
-      if(prev && cur && prev!=='—' && cur!=='—' && prev.toLowerCase()!==cur.toLowerCase()){
-        changes.push({hotel, ciclo:sorted[i].ciclo, antes:prev, despues:cur});
+      if(!cur || cur==='—') continue; // sin contacto actual, nada que reportar
+      if(prev.toLowerCase()!==cur.toLowerCase()){
+        changes.push({hotel, ciclo:sorted[i].ciclo, antes: (prev && prev!=='—') ? prev : 'Sin contacto registrado', despues:cur});
       }
     }
   });
