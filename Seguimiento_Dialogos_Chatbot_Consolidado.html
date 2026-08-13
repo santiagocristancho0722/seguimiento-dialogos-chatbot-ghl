@@ -875,7 +875,7 @@ function getFiltered() {
 function renderMesTabs() {
   const bar = document.getElementById('mesBar');
   bar.innerHTML = getMeses().map(m => `
-    <div class="mes-tab${m==='Todos'?' mes-tab-all':''}${m===activeMes?' active':''}" onclick="setMes('${m}')">${m}</div>
+    <div class="mes-tab${m==='Todos'?' mes-tab-all':''}${m===activeMes?' active':''}" onclick="setMes('${m}')">${m==='Todos'?'Métricas':m}</div>
   `).join('');
 }
 
