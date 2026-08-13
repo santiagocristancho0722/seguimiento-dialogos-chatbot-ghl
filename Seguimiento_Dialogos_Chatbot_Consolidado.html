@@ -1180,6 +1180,13 @@ function cicloSortKey(c) {
   return (+y)*12 + MESES_ORDEN.indexOf(m);
 }
 
+// Cambios de contacto conocidos de ANTES de que iniciara el seguimiento (Jun-26) —
+// no se pueden detectar automáticamente porque no hay un ciclo previo registrado para compararlos.
+const CAMBIOS_CONTACTO_HISTORICOS = [
+  {hotel:"Bioxury", ciclo:"Antes de Jun-26", antes:"Catalina Rojas — catalina.rojas@ghlhoteles.com", despues:"Correo genérico — calidad.bioxury@ghlhoteles.com"},
+  {hotel:"Sonesta Bogotá", ciclo:"Antes de Jun-26", antes:"Sin contacto registrado", despues:"Catalina Rojas — catalina.rojas@ghlhoteles.com"},
+];
+
 // Detecta cambios de persona de contacto de un mismo hotel entre ciclos consecutivos
 function listCambiosContacto(limit) {
   const byHotel = {};
@@ -1196,6 +1203,7 @@ function listCambiosContacto(limit) {
       }
     }
   });
+  changes.push(...CAMBIOS_CONTACTO_HISTORICOS);
   if(!changes.length) return '<div class="dash-empty">Sin cambios de contacto registrados entre ciclos. ✅</div>';
   const rows = changes.slice(0,limit).map(c=>`
     <div class="dash-list-row">
