@@ -1338,14 +1338,14 @@ function renderDashboard() {
       <h3>Top hoteles — diálogos modificados</h3>
       <p class="dash-desc">Hoteles con más diálogos modificados. Usa las pestañas para ver un ciclo específico o el acumulado.</p>
       ${subtabsHTML(scopeHoteles, ciclos, 'setScopeHoteles')}
-      ${chartTopHoteles(6, scopeHoteles)}
+      ${chartTopHoteles(10, scopeHoteles)}
       <div class="dash-action">📌 Reconocer a estos hoteles por su participación activa en la revisión mensual.</div>
     </div>
     <div class="dash-card">
       <h3>Top temáticas modificadas</h3>
       <p class="dash-desc">Qué temáticas de diálogo cambian con más frecuencia entre hoteles. Usa las pestañas para ver por ciclo.</p>
       ${subtabsHTML(scopeTemas, ciclos, 'setScopeTemas')}
-      ${chartTopTemas(6, scopeTemas)}
+      ${chartTopTemas(10, scopeTemas)}
       <div class="dash-action">📌 Si una temática se repite en muchos hoteles, revisar si su plantilla base necesita ajustarse.</div>
     </div>
     <div class="dash-card">
