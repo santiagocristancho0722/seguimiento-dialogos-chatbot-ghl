@@ -1103,41 +1103,22 @@ function chartPctPorCiclo(ciclos, stats, colorMap) {
   return `<svg viewBox="0 0 ${W} ${H+20}">${bars}</svg>`;
 }
 
-function chartDialogosPorCiclo(ciclos, stats) {
-  const W=210, H=117;
-  const padL=6, padR=6, padT=18, padB=22;
-  const plotW = W - padL - padR, plotH = H - padT - padB;
-  const n = ciclos.length;
-  const xs = ciclos.map((c,i)=> n>1 ? padL + i*(plotW/(n-1)) : padL + plotW/2);
-
-  const actVals = ciclos.map(c=>stats[c].actualizadoDialogos);
-  const penVals = ciclos.map(c=>stats[c].pendienteDialogos);
-  const totals = ciclos.map((c,i)=>actVals[i]+penVals[i]);
-  const maxV = Math.max(1, ...totals);
-  const baseY = padT + plotH;
-  const yFor = v => baseY - (v/maxV)*plotH;
-  const yAct = actVals.map(yFor);
-  const yTot = totals.map(yFor);
-
-  const areaPath = (top, bottom) => {
-    let d = `M ${xs[0].toFixed(1)},${bottom[0].toFixed(1)} `;
-    xs.forEach((x,i)=>{ d += `L ${x.toFixed(1)},${top[i].toFixed(1)} `; });
-    for(let i=n-1;i>=0;i--){ d += `L ${xs[i].toFixed(1)},${bottom[i].toFixed(1)} `; }
-    return d + 'Z';
-  };
-  const baseArr = xs.map(()=>baseY);
-
-  let svg = '';
-  svg += `<path d="${areaPath(yAct, baseArr)}" fill="#276221" fill-opacity=".85"></path>`;
-  svg += `<path d="${areaPath(yTot, yAct)}" fill="#856404" fill-opacity=".85"></path>`;
-  svg += `<polyline points="${xs.map((x,i)=>`${x.toFixed(1)},${yAct[i].toFixed(1)}`).join(' ')}" fill="none" stroke="#1a4a17" stroke-width="1"/>`;
-  svg += `<polyline points="${xs.map((x,i)=>`${x.toFixed(1)},${yTot[i].toFixed(1)}`).join(' ')}" fill="none" stroke="#5c4404" stroke-width="1"/>`;
-  xs.forEach((x,i)=>{
-    svg += `<circle cx="${x.toFixed(1)}" cy="${yTot[i].toFixed(1)}" r="2.3" fill="#023859"><title>${ciclos[i]}: ${totals[i]} diálogos (${actVals[i]} actualizados, ${penVals[i]} pendientes)</title></circle>`;
-    svg += `<text x="${x.toFixed(1)}" y="${(yTot[i]-6).toFixed(1)}" text-anchor="middle" class="dash-bar-val" fill="#023859">${totals[i]}</text>`;
-    svg += `<text x="${x.toFixed(1)}" y="${(baseY+13).toFixed(1)}" text-anchor="middle" class="dash-bar-cat">${ciclos[i]}</text>`;
+function chartDialogosPorCiclo(ciclos, stats, colorMap) {
+  const W=210, H=117, barW=15, gap=(W-ciclos.length*barW)/(ciclos.length+1);
+  const maxV = Math.max(1, ...ciclos.map(c=>stats[c].totalDialogos));
+  let bars='';
+  ciclos.forEach((c,i)=>{
+    const s = stats[c];
+    const v = s.totalDialogos;
+    const x = gap + i*(barW+gap);
+    const h = (v/maxV)*(H-20);
+    const y = H-h;
+    const fg = colorMap[c];
+    bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(h,2).toFixed(1)}" rx="3" fill="${fg}"><title>${c}: ${v} diálogos modificados</title></rect>`;
+    bars += `<text x="${x+barW/2}" y="${(y-6).toFixed(1)}" text-anchor="middle" class="dash-bar-val" fill="${fg}">${v}</text>`;
+    bars += `<text x="${x+barW/2}" y="${H+13}" text-anchor="middle" class="dash-bar-cat">${c}</text>`;
   });
-  return `<svg viewBox="0 0 ${W} ${H+20}">${svg}</svg>`;
+  return `<svg viewBox="0 0 ${W} ${H+20}">${bars}</svg>`;
 }
 
 function hbarChart(entries, limit, color, emptyMsg, titleFn) {
@@ -1323,8 +1304,6 @@ function renderDashboard() {
       sinMod: rows.filter(d=>d.estado==='Sin modificaciones').length,
       sinResp: rows.filter(d=>d.estado==='Sin respuesta').length,
       totalDialogos: rows.reduce((s,d)=>s+(d.mods?d.mods.length:0),0),
-      actualizadoDialogos: rows.filter(d=>d.estado==='Actualizado').reduce((s,d)=>s+(d.mods?d.mods.length:0),0),
-      pendienteDialogos: rows.filter(d=>d.estado==='Pendiente actualización').reduce((s,d)=>s+(d.mods?d.mods.length:0),0),
     };
   });
 
@@ -1363,12 +1342,8 @@ function renderDashboard() {
     </div>
     <div class="dash-card">
       <h3>Diálogos modificados por ciclo</h3>
-      <p class="dash-desc">Total de diálogos del chatbot que tuvieron algún cambio reportado en cada ciclo, y cuántos ya están actualizados vs. pendientes.</p>
-      ${chartDialogosPorCiclo(ciclos, cicloStats)}
-      <div class="dash-legend">
-        <div class="dash-legend-item"><div class="dash-legend-dot" style="background:#276221"></div>Actualizado</div>
-        <div class="dash-legend-item"><div class="dash-legend-dot" style="background:#856404"></div>Pendiente</div>
-      </div>
+      <p class="dash-desc">Total de diálogos del chatbot que tuvieron algún cambio reportado en cada ciclo.</p>
+      ${chartDialogosPorCiclo(ciclos, cicloStats, colorMap)}
       <div class="dash-action">${actionDialogos}</div>
     </div>
     <div class="dash-card">
