@@ -1088,12 +1088,14 @@ function chartEstadoPorCiclo(ciclos, stats) {
 
 function chartPctPorCiclo(ciclos, stats, colorMap) {
   const W=210, H=130, barW=17, gap=(W-ciclos.length*barW)/(ciclos.length+1);
+  const pctOf = c => { const s=stats[c]; return s.total ? Math.round((s.total-s.sinResp)/s.total*100) : 0; };
+  const maxPct = Math.max(1, ...ciclos.map(pctOf));
   let bars='';
   ciclos.forEach((c,i)=>{
     const s = stats[c];
-    const pct = s.total ? Math.round((s.total-s.sinResp)/s.total*100) : 0;
+    const pct = pctOf(c);
     const x = gap + i*(barW+gap);
-    const h = (pct/100)*(H-20);
+    const h = (pct/maxPct)*(H-20);
     const y = H-h;
     const fg = colorMap[c];
     bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(h,2).toFixed(1)}" rx="3" fill="${fg}"><title>${c}: ${pct}% de cumplimiento</title></rect>`;
