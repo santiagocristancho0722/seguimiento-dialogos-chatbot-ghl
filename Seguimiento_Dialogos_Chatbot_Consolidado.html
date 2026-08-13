@@ -1087,7 +1087,7 @@ function chartEstadoPorCiclo(ciclos, stats) {
 }
 
 function chartPctPorCiclo(ciclos, stats, colorMap) {
-  const W=210, H=90, barW=17, gap=(W-ciclos.length*barW)/(ciclos.length+1);
+  const W=210, H=130, barW=17, gap=(W-ciclos.length*barW)/(ciclos.length+1);
   let bars='';
   ciclos.forEach((c,i)=>{
     const s = stats[c];
