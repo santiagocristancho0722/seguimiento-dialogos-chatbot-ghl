@@ -1087,7 +1087,7 @@ function chartEstadoPorCiclo(ciclos, stats) {
 }
 
 function chartPctPorCiclo(ciclos, stats, colorMap) {
-  const W=210, H=78, barW=30, gap=(W-ciclos.length*barW)/(ciclos.length+1);
+  const W=210, H=78, barW=45, gap=(W-ciclos.length*barW)/(ciclos.length+1);
   let bars='';
   ciclos.forEach((c,i)=>{
     const s = stats[c];
@@ -1104,7 +1104,7 @@ function chartPctPorCiclo(ciclos, stats, colorMap) {
 }
 
 function chartDialogosPorCiclo(ciclos, stats, colorMap) {
-  const W=210, H=78, barW=30, gap=(W-ciclos.length*barW)/(ciclos.length+1);
+  const W=210, H=78, barW=45, gap=(W-ciclos.length*barW)/(ciclos.length+1);
   const maxV = Math.max(1, ...ciclos.map(c=>stats[c].totalDialogos));
   let bars='';
   ciclos.forEach((c,i)=>{
