@@ -1063,22 +1063,22 @@ function cicloColorMap(ciclos) {
 }
 
 function chartEstadoPorCiclo(ciclos, stats) {
-  const W=210, H=95, barW=30, gap=(W-ciclos.length*barW)/(ciclos.length+1);
+  const W=210, H=95, barW=15, segGap=2.2, gap=(W-ciclos.length*barW)/(ciclos.length+1);
   let bars='';
   ciclos.forEach((c,i)=>{
     const s = stats[c];
     const total = s.total || 1;
     const x = gap + i*(barW+gap);
-    const segs = [['Actualizado',s.actualizado,'#276221'],['Pendiente',s.pendiente,'#856404'],['Sin modificaciones',s.sinMod,'#1f4e79'],['Sin respuesta',s.sinResp,'#9c0006']];
+    const segs = [['Actualizado',s.actualizado,'#276221'],['Pendiente',s.pendiente,'#856404'],['Sin modificaciones',s.sinMod,'#1f4e79'],['Sin respuesta',s.sinResp,'#9c0006']].filter(([,v])=>v>0);
     let y = H;
     segs.forEach(([label,v,color])=>{
       const h = (v/total)*H;
-      if(v>0){
-        y -= h;
-        bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(h-1.5,0).toFixed(1)}" rx="2" fill="${color}"><title>${c} — ${label}: ${v}</title></rect>`;
-      }
+      const rectY = y - h + segGap/2;
+      const rectH = Math.max(h - segGap, 1);
+      bars += `<rect x="${x}" y="${rectY.toFixed(1)}" width="${barW}" height="${rectH.toFixed(1)}" rx="2.2" fill="${color}"><title>${c} — ${label}: ${v}</title></rect>`;
+      y -= h;
     });
-    bars += `<text x="${x+barW/2}" y="${H+13}" text-anchor="middle" class="dash-bar-cat">${c}</text>`;
+    bars += `<text x="${x+barW/2}" y="${H+12}" text-anchor="middle" class="dash-bar-cat" style="font-size:8.5px">${c}</text>`;
   });
   return `<svg viewBox="0 0 ${W} ${H+20}">${bars}</svg>`;
 }
