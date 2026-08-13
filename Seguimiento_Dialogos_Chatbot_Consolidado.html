@@ -1087,7 +1087,7 @@ function chartEstadoPorCiclo(ciclos, stats) {
 }
 
 function chartPctPorCiclo(ciclos, stats, colorMap) {
-  const W=210, H=117, barW=15, gap=(W-ciclos.length*barW)/(ciclos.length+1);
+  const W=210, H=90, barW=17, gap=(W-ciclos.length*barW)/(ciclos.length+1);
   let bars='';
   ciclos.forEach((c,i)=>{
     const s = stats[c];
@@ -1097,14 +1097,14 @@ function chartPctPorCiclo(ciclos, stats, colorMap) {
     const y = H-h;
     const fg = colorMap[c];
     bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(h,2).toFixed(1)}" rx="3" fill="${fg}"><title>${c}: ${pct}% de cumplimiento</title></rect>`;
-    bars += `<text x="${x+barW/2}" y="${(y+11).toFixed(1)}" text-anchor="middle" font-size="7.5" font-weight="700" fill="#fff">${pct}%</text>`;
+    bars += `<text x="${x+barW/2}" y="${(y+9).toFixed(1)}" text-anchor="middle" font-size="6" font-weight="700" fill="#fff">${pct}%</text>`;
     bars += `<text x="${x+barW/2}" y="${H+13}" text-anchor="middle" class="dash-bar-cat" style="font-size:8.5px">${c}</text>`;
   });
   return `<svg viewBox="0 0 ${W} ${H+20}">${bars}</svg>`;
 }
 
 function chartDialogosPorCiclo(ciclos, stats, colorMap) {
-  const W=210, H=117, barW=15, gap=(W-ciclos.length*barW)/(ciclos.length+1);
+  const W=210, H=90, barW=17, gap=(W-ciclos.length*barW)/(ciclos.length+1);
   const maxV = Math.max(1, ...ciclos.map(c=>stats[c].totalDialogos));
   let bars='';
   ciclos.forEach((c,i)=>{
@@ -1115,7 +1115,7 @@ function chartDialogosPorCiclo(ciclos, stats, colorMap) {
     const y = H-h;
     const fg = colorMap[c];
     bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(h,2).toFixed(1)}" rx="3" fill="${fg}"><title>${c}: ${v} diálogos modificados</title></rect>`;
-    bars += `<text x="${x+barW/2}" y="${(y+11).toFixed(1)}" text-anchor="middle" font-size="7.5" font-weight="700" fill="#fff">${v}</text>`;
+    bars += `<text x="${x+barW/2}" y="${(y+9).toFixed(1)}" text-anchor="middle" font-size="6" font-weight="700" fill="#fff">${v}</text>`;
     bars += `<text x="${x+barW/2}" y="${H+13}" text-anchor="middle" class="dash-bar-cat" style="font-size:8.5px">${c}</text>`;
   });
   return `<svg viewBox="0 0 ${W} ${H+20}">${bars}</svg>`;
