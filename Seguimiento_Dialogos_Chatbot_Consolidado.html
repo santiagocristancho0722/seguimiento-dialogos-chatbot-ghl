@@ -1063,7 +1063,7 @@ function cicloColorMap(ciclos) {
 }
 
 function chartEstadoPorCiclo(ciclos, stats) {
-  const W=210, H=95, barW=15, segGap=2.2, gap=(W-ciclos.length*barW)/(ciclos.length+1);
+  const W=210, H=95, barW=18.75, segGap=2.2, gap=(W-ciclos.length*barW)/(ciclos.length+1);
   let bars='';
   ciclos.forEach((c,i)=>{
     const s = stats[c];
@@ -1076,6 +1076,9 @@ function chartEstadoPorCiclo(ciclos, stats) {
       const rectY = y - h + segGap/2;
       const rectH = Math.max(h - segGap, 1);
       bars += `<rect x="${x}" y="${rectY.toFixed(1)}" width="${barW}" height="${rectH.toFixed(1)}" rx="2.2" fill="${color}"><title>${c} — ${label}: ${v}</title></rect>`;
+      if(rectH >= 6.5){
+        bars += `<text x="${(x+barW/2).toFixed(1)}" y="${(rectY+rectH/2+2.4).toFixed(1)}" text-anchor="middle" font-size="6.3" font-weight="700" fill="#fff">${v}</text>`;
+      }
       y -= h;
     });
     bars += `<text x="${x+barW/2}" y="${H+12}" text-anchor="middle" class="dash-bar-cat" style="font-size:8.5px">${c}</text>`;
